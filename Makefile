@@ -21,6 +21,8 @@ TEST_FILE :=  $(shell echo $(FPGA_SRC)/*_test.v)
 FW_DIR = ./firmware
 FW_INCLUDE = $(FW_DIR)/include
 FW_SRC = $(FW_DIR)/src
+FW_SRC_FILE = $(shell echo $(FW_SRC)/*.c)
+ARCH = rv32imc
 CROSS = riscv32-unknown-elf-
 CFLAGS = -ffreestanding -nostdlib 
 OFFSET = 0x00100000
@@ -73,7 +75,7 @@ formatter:
 build_fw: $(BUILD_DIR) $(BUILD_DIR)/$(PROJ)_fw.bin
 # Building code for riscv
 $(BUILD_DIR)/%_fw.elf: $(FW_SRC)/*.c $(FW_INCLUDE)/*.h $(FW_DIR)/sections.lds $(FW_DIR)/start.s
-	$(CROSS)gcc $(CFLAGS) -o $@ -mabi=ilp32 -march=rv32ic -Wl,-Bstatic,-T,$(FW_DIR)/sections.lds,--strip-debug -I $(FW_INCLUDE) $(FW_DIR)/start.s $<
+	$(CROSS)gcc $(CFLAGS) -o $@ -mabi=ilp32 -march=$(ARCH) -Wl,-Bstatic,-T,$(FW_DIR)/sections.lds,--strip-debug -I $(FW_INCLUDE) $(FW_DIR)/start.s $(FW_SRC_FILE)
 
 $(BUILD_DIR)/%_fw.bin: $(BUILD_DIR)/$(PROJ)_fw.elf
 	$(CROSS)objcopy -O binary $< $@
