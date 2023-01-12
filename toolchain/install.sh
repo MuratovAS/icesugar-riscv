@@ -38,7 +38,6 @@ cd $TOOLCHAIN_PATH && cat $LOCAL_DIR/../toolchain.txt \
 
 cd $TOOLCHAIN_PATH && cat $LOCAL_DIR/../toolchain.txt \
                   | sed '/^#/d' | grep "toolchain-riscv32i" \
-                  && cd ./ \
                   && $LOCAL_DIR/getGithub.sh MuratovAS/toolchain-riscv32i toolchain-riscv32i.tar.gz \
-                  && tar -cvf toolchain-riscv32i.tar.gz 
+                  && tar -xvf toolchain-riscv32i.tar.gz \
                   && rm toolchain-riscv32i.tar.gz
