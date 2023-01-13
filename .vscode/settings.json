@@ -5,7 +5,7 @@
     "VsCodeTaskButtons.showCounter": false,
     "VsCodeTaskButtons.tasks": [
         {
-            "label": "$(server-process) Build",
+            "label": "$(server-process) Make",
             "task": "PRJ: make",
         },
         {

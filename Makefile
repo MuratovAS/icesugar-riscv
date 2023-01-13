@@ -36,9 +36,9 @@ BUILD_DIR = build
 TOOLCHAIN_PATH := $(shell echo $$(readlink -f $(TOOLCHAIN_PATH)))
 PATH := $(shell echo $(TOOLCHAIN_PATH)/*/bin | sed 's/ /:/g'):$(PATH)
 
-all: assemble build_fw
+all: synthesis build_fw
 
-assemble: $(BUILD_DIR) $(BUILD_DIR)/$(PROJ).bin
+synthesis: $(BUILD_DIR) $(BUILD_DIR)/$(PROJ).bin
 # rules for building the blif file
 $(BUILD_DIR)/%.json: $(TOP_FILE) $(FPGA_SRC)/*.v
 	yosys -q -l $(BUILD_DIR)/build.log -p '$(SERIES) $(ROUTE_ARG) -top top -json $@; show -format dot -prefix $(BUILD_DIR)/$(PROJ)' $< 
@@ -60,12 +60,12 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/testbench.out $(BUILD_DIR)/$(PROJ)_fw.hex
 $(BUILD_DIR)/testbench.out: $(FPGA_SRC)/*.v
 	iverilog -o $@ -B $(TOOLCHAIN_PATH)/toolchain-iverilog/lib/ivl $(TOOLCHAIN_PATH)/toolchain-yosys/share/yosys/ice40/cells_sim.v $(TOP_FILE) $(TB_FILE)
 
-flash: $(BUILD_DIR)/$(PROJ).bin
 # Flash memory firmware
+flash: $(BUILD_DIR)/$(PROJ).bin
 	$(PROGRAMMER) $<
 
-prog: $(BUILD_DIR)/$(PROJ).bin
 # Flash in SRAM
+prog: $(BUILD_DIR)/$(PROJ).bin
 	$(PROGRAMMER) -S $<
 
 formatter:
@@ -109,7 +109,7 @@ $(BUILD_DIR)/test.out: $(FPGA_SRC)/*.v
 
 #secondary needed or make will remove useful intermediate files
 .SECONDARY:
-.PHONY: all assemble sim flash prog formatter build_fw flash_fw clean toolchain test
+.PHONY: all synthesis sim flash prog formatter build_fw flash_fw clean toolchain test
 
 # $@ The file name of the target of the rule.rule
 # $< first pre requisite

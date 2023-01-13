@@ -8,11 +8,11 @@
             "problemMatcher": []
         },
         {
-            "label": "PRJ: assemble",
+            "label": "PRJ: synthesis",
             "type": "shell",
             "command": "make",
             "args": [
-                "assemble"
+                "synthesis"
             ],
             "problemMatcher": []
         },
