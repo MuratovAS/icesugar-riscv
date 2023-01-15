@@ -1,6 +1,6 @@
 # icesugar-riscv
 
-[FPGACode-ide](https://github.com/MuratovAS/FPGACode-ide) -> [**IceSugar-riscv**](https://github.com/MuratovAS/icesugar-riscv) -> *IceSugar-tv80.....*
+[FPGACode-ide](https://github.com/MuratovAS/FPGACode-ide) -> [**IceSugar-riscv**](https://github.com/MuratovAS/icesugar-riscv) -> [IceSugar-tv80](https://github.com/MuratovAS/icesugar-z80)
 
 Here you will find a project for IceSugar implementing RISCV32.
 As well as full automation of assembly and testing.
