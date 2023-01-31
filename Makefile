@@ -69,9 +69,9 @@ prog: $(BUILD_DIR)/$(PROJ).bin
 	$(PROGRAMMER) -S $<
 
 formatter:
-	if [ $(FORMAT) == "istyle" ]; then istyle  -t4 -b -o --pad=block $(FPGA_SRC)/*.v; fi
-	if [ $(FORMAT) == "verilog-format" ]; then find ./src/*.v | xargs -t -L1 java -jar ${TOOLCHAIN_PATH}/verilog-format/bin/verilog-format.jar -s .verilog-format -f ; fi
-	
+	if [ $(FORMAT) == "istyle" ]; then istyle-verilog-formatter  -t4 -b -o --pad=block $(FPGA_SRC)/*.v; fi
+	if [ $(FORMAT) == "verilog-format" ]; then find ./src/*.v | xargs -t -L1 java -jar ${TOOLCHAIN_PATH}/utils/bin/verilog-format.jar -s .verilog-format -f ; fi
+
 build_fw: $(BUILD_DIR) $(BUILD_DIR)/$(PROJ)_fw.bin
 # Building code for riscv
 $(BUILD_DIR)/%_fw.elf: $(FW_SRC)/*.c $(FW_INCLUDE)/*.h $(FW_DIR)/sections.lds $(FW_DIR)/start.s
@@ -91,11 +91,9 @@ clean:
 	rm -f $(BUILD_DIR)/*
 
 toolchain:
-	chmod +x ./toolchain/*.sh
-	sudo rm -rf $(TOOLCHAIN_PATH)
-	sudo ./toolchain/install.sh $(TOOLCHAIN_PATH)
-	if [ -d ".vscode" ]; then sed -i 's@\(\"verilog.linting.path\":\)[^,]*@\1 "${TOOLCHAIN_PATH}/toolchain-iverilog/bin/"@' .vscode/settings.json; fi
-	if [ -d ".vscode" ]; then sed -i 's@\(\"verilog.linting.iverilog.arguments\":\)[^,]*@\1 "-B ${TOOLCHAIN_PATH}/toolchain-iverilog/lib/ivl"@' .vscode/settings.json; fi
+	curl https://raw.githubusercontent.com/MuratovAS/FPGACode-toolchain/main/toolchain.sh > ./toolchain.sh
+	chmod +x ./toolchain.sh
+	sudo ./toolchain.sh $(TOOLCHAIN_PATH)
 
 # ----------------------------------------------------------------------------------
 
