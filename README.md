@@ -23,7 +23,6 @@ make build_fw   #Build firmware
 make flash_fw   #Build firmware
 make clean      #Cleaning the assembly of the project
 make toolchain  #Install assembly tools
-make test       #add-on for testing individual fragments
 ```
 
 ## Using IceSugar resources
