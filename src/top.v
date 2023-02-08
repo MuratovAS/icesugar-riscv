@@ -109,10 +109,6 @@ module top (
 	end
 
 	picosoc #(
-		.BARREL_SHIFTER(0),
-		.ENABLE_MUL(1),
-		.ENABLE_DIV(1),
-		.ENABLE_FAST_MUL(0),
 		.MEM_WORDS(MEM_WORDS)
 	) soc (
 		.clk          (clk         ),

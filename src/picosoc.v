@@ -69,13 +69,6 @@ module picosoc (
 	input  flash_io2_di,
 	input  flash_io3_di
 );
-	parameter [0:0] BARREL_SHIFTER = 1;
-	parameter [0:0] ENABLE_MUL = 1;
-	parameter [0:0] ENABLE_DIV = 1;
-	parameter [0:0] ENABLE_FAST_MUL = 0;
-	parameter [0:0] ENABLE_COMPRESSED = 1;
-	parameter [0:0] ENABLE_COUNTERS = 1;
-	parameter [0:0] ENABLE_IRQ_QREGS = 0;
 
 	parameter integer MEM_WORDS = 256;
 	parameter [31:0] STACKADDR = (4*MEM_WORDS);       // end of memory
@@ -134,15 +127,31 @@ module picosoc (
 	picorv32 #(
 		.STACKADDR(STACKADDR),
 		.PROGADDR_RESET(PROGADDR_RESET),
-		.PROGADDR_IRQ(PROGADDR_IRQ),
-		.BARREL_SHIFTER(BARREL_SHIFTER),
-		.COMPRESSED_ISA(ENABLE_COMPRESSED),
-		.ENABLE_COUNTERS(ENABLE_COUNTERS),
-		.ENABLE_MUL(ENABLE_MUL),
-		.ENABLE_DIV(ENABLE_DIV),
-		.ENABLE_FAST_MUL(ENABLE_FAST_MUL),
-		.ENABLE_IRQ(1),
-		.ENABLE_IRQ_QREGS(ENABLE_IRQ_QREGS)
+		.ENABLE_PCPI		(0), //1
+		.ENABLE_MUL			(0), //1
+		.ENABLE_FAST_MUL	(0), //0
+		.ENABLE_DIV			(0), //1
+		.PROGADDR_IRQ		(PROGADDR_IRQ),
+		//.MASKED_IRQ       (MASKED_IRQ          ),
+		//.LATCHED_IRQ      (LATCHED_IRQ         ),
+		.ENABLE_IRQ			(0), //1
+		.ENABLE_IRQ_QREGS	(0), //1
+		.ENABLE_IRQ_TIMER   (0), //1
+		.BARREL_SHIFTER		(0), //1
+		.COMPRESSED_ISA		(0), //1 +
+		.ENABLE_COUNTERS	(1), //1 +++
+		.ENABLE_COUNTERS64   (0), //1
+		.ENABLE_REGS_16_31   (1), //1 ++
+		.ENABLE_REGS_DUALPORT(1), //1 +++
+		.TWO_STAGE_SHIFT     (0), //1 +
+		.TWO_CYCLE_COMPARE   (0), //0
+		.TWO_CYCLE_ALU       (0), //0
+
+		.CATCH_MISALIGN      (1), //1 ++
+		.CATCH_ILLINSN       (1), //1 ++
+
+		.ENABLE_TRACE        (0), //0
+		.REGS_INIT_ZERO      (0)  //0
 	) cpu (
 		.clk         (clk        ),
 		.resetn      (resetn     ),
