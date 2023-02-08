@@ -14,7 +14,6 @@ FPGA_SRC = ./src
 PIN_DEF = ./icesugar.pcf
 TOP_FILE = $(shell echo $(FPGA_SRC)/top.v)
 TB_FILE :=  $(shell echo $(FPGA_SRC)/*_tb.v)
-TEST_FILE :=  $(shell echo $(FPGA_SRC)/*_test.v)
 
 # ----------------------------------------------------------------------------------
 
@@ -22,7 +21,7 @@ FW_DIR = ./firmware
 FW_INCLUDE = $(FW_DIR)/include
 FW_SRC = $(FW_DIR)/src
 FW_SRC_FILE = $(shell echo $(FW_SRC)/*.c)
-ARCH = rv32imc
+ARCH = rv32im
 CROSS = riscv32-unknown-elf-
 CFLAGS = -ffreestanding -nostdlib 
 OFFSET = 0x00100000
@@ -54,11 +53,11 @@ $(BUILD_DIR)/%.rpt: $(BUILD_DIR)/%.asc
 
 sim: $(BUILD_DIR) $(BUILD_DIR)/%.vcd 
 $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/testbench.out $(BUILD_DIR)/$(PROJ)_fw.hex
-	vvp -v -M $(TOOLCHAIN_PATH)/toolchain-iverilog/lib/ivl $< +firmware=$(BUILD_DIR)/$(PROJ)_fw.hex
+	vvp -v -M $(TOOLCHAIN_PATH)/tools-oss-cad-suite/lib/ivl $< +firmware=$(BUILD_DIR)/$(PROJ)_fw.hex
 	mv ./*.vcd $(BUILD_DIR)
 
 $(BUILD_DIR)/testbench.out: $(FPGA_SRC)/*.v
-	iverilog -o $@ -B $(TOOLCHAIN_PATH)/toolchain-iverilog/lib/ivl $(TOOLCHAIN_PATH)/toolchain-yosys/share/yosys/ice40/cells_sim.v $(TOP_FILE) $(TB_FILE)
+	iverilog -o $@ -B $(TOOLCHAIN_PATH)/tools-oss-cad-suite/lib/ivl $(TOOLCHAIN_PATH)/tools-oss-cad-suite/share/yosys/ice40/cells_sim.v $(TOP_FILE) $(TB_FILE)
 
 # Flash memory firmware
 flash: $(BUILD_DIR)/$(PROJ).bin
@@ -96,15 +95,6 @@ toolchain:
 	sudo ./toolchain.sh $(TOOLCHAIN_PATH)
 
 # ----------------------------------------------------------------------------------
-
-#for testing individual fragments
-test: $(BUILD_DIR) $(BUILD_DIR)/%_test.vcd 
-$(BUILD_DIR)/%_test.vcd: $(BUILD_DIR)/test.out
-	vvp -v -M $(TOOLCHAIN_PATH)/toolchain-iverilog/lib/ivl $<
-	mv ./*.vcd $(BUILD_DIR)
-
-$(BUILD_DIR)/test.out: $(FPGA_SRC)/*.v
-	iverilog -o $@ -B $(TOOLCHAIN_PATH)/toolchain-iverilog/lib/ivl $(TEST_FILE)
 
 #secondary needed or make will remove useful intermediate files
 .SECONDARY:
