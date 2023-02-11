@@ -16,29 +16,15 @@
  *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-
-`define PICOSOC_MEM ice40up5k_spram
-
-`include "src/ice40up5k_spram.v"
-`include "src/spimemio.v"
-`include "src/simpleuart.v"
 `include "src/picosoc.v"
-`include "src/picorv32.v"
 
 module top (
-	input clk,
+	output uart_tx,
+	input uart_rx,
 
-	output ser_tx,
-	input ser_rx,
-
-	output led1,
-	output led2,
-	output led3,
-	output led4,
-	output led5,
-
-	output ledr_n,
-	output ledg_n,
+	output LED_R,
+	output LED_G,
+	output LED_B,
 
 	output flash_csb,
 	output flash_clk,
@@ -47,25 +33,52 @@ module top (
 	inout  flash_io2,
 	inout  flash_io3
 );
-	parameter integer MEM_WORDS = 32768;
+	wire clk_48m;
+	wire clk_12m;
+
+	//internal oscillators seen as modules
+	//Source = 48MHz, CLKHF_DIV = 2’b00 : 00 = div1, 01 = div2, 10 = div4, 11 = div8 ; Default = “00”
+	//SB_HFOSC SB_HFOSC_inst(
+	SB_HFOSC #(.CLKHF_DIV("0b10")) SB_HFOSC_inst (
+		.CLKHFEN(1),
+		.CLKHFPU(1),
+		.CLKHF(clk_12m)
+	);
+
+	//10khz used for low power applications (or sleep mode)
+	/*SB_LFOSC SB_LFOSC_inst(
+		.CLKLFEN(1),
+		.CLKLFPU(1),
+		.CLKLF(clk_10k)
+	);*/
+	
+	// toolchain-ice40/bin/icepll
+	/*SB_PLL40_CORE #(
+      .FEEDBACK_PATH("SIMPLE"),
+      .PLLOUT_SELECT("GENCLK"),
+      .DIVR(4'b0000),
+      .DIVF(7'b0001111),
+      .DIVQ(3'b101),
+      .FILTER_RANGE(3'b100),
+    ) SB_PLL40_CORE_inst (
+      .RESETB(1'b1),
+      .BYPASS(1'b0),
+      .PLLOUTCORE(clk_48m),
+      .REFERENCECLK(clk_12m)
+   );*/
 
 	reg [5:0] reset_cnt = 0;
 	wire resetn = &reset_cnt;
 
-	always @(posedge clk) begin
+	always @(posedge clk_12m) begin
 		reset_cnt <= reset_cnt + !resetn;
 	end
 
 	wire [7:0] leds;
 
-	assign led1 = leds[1];
-	assign led2 = leds[2];
-	assign led3 = leds[3];
-	assign led4 = leds[4];
-	assign led5 = leds[5];
-
-	assign ledr_n = !leds[6];
-	assign ledg_n = !leds[7];
+	assign LED_R = leds[1];
+	assign LED_G = leds[2];
+	assign LED_B = leds[3];
 
 	wire flash_io0_oe, flash_io0_do, flash_io0_di;
 	wire flash_io1_oe, flash_io1_do, flash_io1_di;
@@ -82,68 +95,24 @@ module top (
 		.D_IN_0({flash_io3_di, flash_io2_di, flash_io1_di, flash_io0_di})
 	);
 
-	wire        iomem_valid;
-	reg         iomem_ready;
-	wire [3:0]  iomem_wstrb;
-	wire [31:0] iomem_addr;
-	wire [31:0] iomem_wdata;
-	reg  [31:0] iomem_rdata;
-
-	reg [31:0] gpio;
-	assign leds = gpio;
-
-	always @(posedge clk) begin
-		if (!resetn) begin
-			gpio <= 0;
-		end else begin
-			iomem_ready <= 0;
-			if (iomem_valid && !iomem_ready && iomem_addr[31:24] == 8'h 03) begin
-				iomem_ready <= 1;
-				iomem_rdata <= gpio;
-				if (iomem_wstrb[0]) gpio[ 7: 0] <= iomem_wdata[ 7: 0];
-				if (iomem_wstrb[1]) gpio[15: 8] <= iomem_wdata[15: 8];
-				if (iomem_wstrb[2]) gpio[23:16] <= iomem_wdata[23:16];
-				if (iomem_wstrb[3]) gpio[31:24] <= iomem_wdata[31:24];
-			end
-		end
-	end
-
-	picosoc #(
-		.MEM_WORDS(MEM_WORDS)
-	) soc (
-		.clk          (clk         ),
+	picosoc soc (
+		.clk          (clk_12m         ),
 		.resetn       (resetn      ),
 
-		.ser_tx       (ser_tx      ),
-		.ser_rx       (ser_rx      ),
+		.ser_tx       (uart_tx      ),
+		.ser_rx       (uart_rx      ),
 
 		.flash_csb    (flash_csb   ),
 		.flash_clk    (flash_clk   ),
 
-		.flash_io0_oe (flash_io0_oe),
-		.flash_io1_oe (flash_io1_oe),
-		.flash_io2_oe (flash_io2_oe),
-		.flash_io3_oe (flash_io3_oe),
-
-		.flash_io0_do (flash_io0_do),
-		.flash_io1_do (flash_io1_do),
-		.flash_io2_do (flash_io2_do),
-		.flash_io3_do (flash_io3_do),
-
-		.flash_io0_di (flash_io0_di),
-		.flash_io1_di (flash_io1_di),
-		.flash_io2_di (flash_io2_di),
-		.flash_io3_di (flash_io3_di),
+		.flash_oe ({flash_io3_oe,flash_io2_oe,flash_io1_oe,flash_io0_oe}),
+		.flash_do ({flash_io3_do,flash_io2_do,flash_io1_do,flash_io0_do}),
+		.flash_di ({flash_io3_di,flash_io2_di,flash_io1_di,flash_io0_di}),
 
 		.irq_5        (1'b0        ),
 		.irq_6        (1'b0        ),
 		.irq_7        (1'b0        ),
 
-		.iomem_valid  (iomem_valid ),
-		.iomem_ready  (iomem_ready ),
-		.iomem_wstrb  (iomem_wstrb ),
-		.iomem_addr   (iomem_addr  ),
-		.iomem_wdata  (iomem_wdata ),
-		.iomem_rdata  (iomem_rdata )
+		.gpio  ({LED_B,LED_G,LED_R})
 	);
 endmodule

@@ -1,17 +1,11 @@
-
 #include "main.h"
 #include "stdio.h"
 //#include "irq.h"
 
-#define ICEBREAKER
+//#define SPIROM
 
-#ifdef ICEBREAKER
-#  define MEM_TOTAL 0x20000 /* 128 KB */
-#elif HX8KDEMO
-#  define MEM_TOTAL 0x200 /* 2 KB */
-#else
-#  error "Set -DICEBREAKER or -DHX8KDEMO when compiling firmware.c"
-#endif
+#define MEM_TOTAL 0x20000 /* 128 KB */
+
 
 // a pointer to this is a null pointer, but the compiler does not
 // know that because "sram" is a linker symbol from sections.lds.
@@ -39,7 +33,7 @@ void flashio(uint8_t *data, int len, uint8_t wrencmd)
 	((void(*)(uint8_t*, uint32_t, uint32_t))func)(data, len, wrencmd);
 }
 
-#ifdef ICEBREAKER
+
 void set_flash_qspi_flag()
 {
 	uint8_t buffer[8];
@@ -80,7 +74,6 @@ void enable_flash_crm()
 {
 	reg_spictrl |= 0x00100000;
 }
-#endif
 
 // --------------------------------------------------------
 
@@ -190,7 +183,7 @@ void cmd_read_flash_id()
 
 // --------------------------------------------------------
 
-#ifdef ICEBREAKER
+
 uint8_t cmd_read_flash_reg(uint8_t cmd)
 {
 	uint8_t buffer[2] = {cmd, 0};
@@ -249,7 +242,6 @@ void cmd_read_flash_regs()
 	print_reg_bit(sr3 & 0x80, "S23 (HOLD)");
 	putchar('\n');
 }
-#endif
 
 // --------------------------------------------------------
 
@@ -314,7 +306,7 @@ uint32_t cmd_benchmark(bool verbose, uint32_t *instns_p)
 // --------------------------------------------------------
 
 
-#ifdef ICEBREAKER
+
 void cmd_benchmark_all()
 {
 	uint32_t instns = 0;
@@ -355,7 +347,6 @@ void cmd_benchmark_all()
 	putchar('\n');
 
 }
-#endif
 
 void cmd_echo()
 {
@@ -403,13 +394,16 @@ void stats(void)
 
 void main()
 {
-	reg_leds = 31;
+	reg_leds = 0b0000000000000001;
 
 	reg_uart_clkdiv = 104;
 	print("Booting..\n");
 
-	reg_leds = 63;
+	reg_leds = 0b0000000000000100;
+
+	#ifdef SPIROM
 	set_flash_qspi_flag();
+	#endif
 
 	reg_leds = 0;
 	while (getchar_prompt("Press ENTER to continue..\n") != '\r') { }
@@ -430,7 +424,10 @@ void main()
 	//cmd_memtest(); // test overwrites bss and data memory
 	print("\n");
 
+
+	#ifdef SPIROM
 	cmd_print_spi_state();
+	#endif
 	print("\n");
 
 	while (1)
@@ -439,6 +436,8 @@ void main()
 
 		print("Select an action:\n");
 		print("\n");
+
+		#ifdef SPIROM
 		print("   [1] Read SPI Flash ID\n");
 		print("   [2] Read SPI Config Regs\n");
 		print("   [3] Switch to default mode\n");
@@ -446,10 +445,11 @@ void main()
 		print("   [5] Switch to Quad I/O mode\n");
 		print("   [6] Switch to Quad DDR mode\n");
 		print("   [7] Toggle continuous read mode\n");
-		print("   [9] Run simplistic benchmark\n");
 		print("   [0] Benchmark all configs\n");
-		print("   [M] Run Memtest\n");
 		print("   [s] Print SPI state\n");
+		#endif
+		print("   [9] Run simplistic benchmark\n");
+		print("   [M] Run Memtest\n");
 		print("   [e] Echo UART\n");
 		print("   [S] Stats\n");
 		print("\n");
@@ -464,6 +464,8 @@ void main()
 
 			switch (cmd)
 			{
+
+		#ifdef SPIROM
 			case '1':
 				cmd_read_flash_id();
 				break;
@@ -485,18 +487,24 @@ void main()
 			case '7':
 				reg_spictrl = reg_spictrl ^ 0x00100000;
 				break;
+		#endif
 			case '9':
 				cmd_benchmark(true, 0);
 				break;
+		#ifdef SPIROM
 			case '0':
 				cmd_benchmark_all();
+		#endif
 				break;
 			case 'M':
 				cmd_memtest();
 				break;
+
+		#ifdef SPIROM
 			case 's':
 				cmd_print_spi_state();
 				break;
+		#endif
 			case 'e':
 				cmd_echo();
 				break;

@@ -18,16 +18,19 @@
  *
  */
 
-module ice40up5k_spram #(
-	// We current always use the whole SPRAM (128 kB)
-	parameter integer WORDS = 32768
+module ramspram #(
+	// FIXME: We current always use the whole SPRAM (128 kB)
+	parameter integer WORDS = 131072
 ) (
 	input clk,
 	input [3:0] wen,
+	input valid,
+	output ready,
 	input [21:0] addr,
 	input [31:0] wdata,
 	output [31:0] rdata
 );
+	reg ready;
 
 	wire cs_0, cs_1;
 	wire [31:0] rdata_0, rdata_1;
@@ -35,6 +38,9 @@ module ice40up5k_spram #(
 	assign cs_0 = !addr[14];
 	assign cs_1 = addr[14];
 	assign rdata = addr[14] ? rdata_1 : rdata_0;
+
+	always @(posedge clk) 
+		ready <= valid;
 
 	SB_SPRAM256KA ram00 (
 		.ADDRESS(addr[13:0]),

@@ -8,6 +8,12 @@ More detailed documentation on usage in the [FPGACode-ide](https://github.com/Mu
 
 This project is based on the developments of [picorv32](https://github.com/YosysHQ/picorv32)
 
+What is done:
+- RAM: SPRAM or BRAM
+- ROM: BRAM or SPI FLASH
+- todo: UART: Minimal size uart
+- todo: SPI: Classic spi
+
 ## Usage
 
 The commands can be executed manually in the terminal as well as through the `Task menu` in `Code`
@@ -28,14 +34,14 @@ make toolchain  #Install assembly tools
 ## Using IceSugar resources
 ```
 Info: Device utilisation:
-Info:            ICESTORM_LC:  5273/ 5280    99%
-Info:           ICESTORM_RAM:     4/   30    13%
-Info:                  SB_IO:    16/   96    16%
+Info:            ICESTORM_LC:  2468/ 5280    46%
+Info:           ICESTORM_RAM:    20/   30    66%
+Info:                  SB_IO:    11/   96    11%
 Info:                  SB_GB:     8/    8   100%
 Info:           ICESTORM_PLL:     0/    1     0%
 Info:            SB_WARMBOOT:     0/    1     0%
 Info:           ICESTORM_DSP:     0/    8     0%
-Info:         ICESTORM_HFOSC:     0/    1     0%
+Info:         ICESTORM_HFOSC:     1/    1   100%
 Info:         ICESTORM_LFOSC:     0/    1     0%
 Info:                 SB_I2C:     0/    2     0%
 Info:                 SB_SPI:     0/    2     0%
