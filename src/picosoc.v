@@ -24,6 +24,7 @@
 
 `include "src/spimemio.v"
 `include "src/simpleuart.v"
+`include "src/gpio.v"
 
 `ifndef PICORV32_REGS
 `define PICORV32_REGS picosoc_regs
@@ -59,6 +60,7 @@ module picosoc #(
 	output [3:0] flash_do,
 	input  [3:0] flash_di
 );
+	reg [31:0] 	gpio;
 	reg [31:0] irq;
 	wire irq_stall = 0;
 	wire irq_uart = 0;
@@ -80,19 +82,8 @@ module picosoc #(
 	wire [3:0] cpu_wstrb;
 	wire [31:0] cpu_rdata;
 
-	wire rom_ready;
-	wire [31:0] rom_rdata;
-
-	reg ram_ready;
-	wire [31:0] ram_rdata;
-
-	reg [31:0] 	gpio;
-	wire        iomem_valid = cpu_valid && (cpu_addr[31:24] > 8'h 01);
-	reg         iomem_ready;
-	wire [3:0]  iomem_wstrb = cpu_wstrb;;
-	wire [31:0] iomem_addr  = cpu_addr;
-	wire [31:0] iomem_wdata = cpu_wdata;
-	reg  [31:0] iomem_rdata;
+	wire rom_ready, ram_ready, gpio_ready;
+	wire [31:0] rom_rdata, ram_rdata, gpio_rdata;
 
 	wire spimemio_cfgreg_sel = cpu_valid && (cpu_addr == 32'h 0200_0000);
 	wire [31:0] spimemio_cfgreg_do;
@@ -104,10 +95,10 @@ module picosoc #(
 	wire [31:0] simpleuart_reg_dat_do;
 	wire        simpleuart_reg_dat_wait;
 
-	assign cpu_ready = (iomem_valid && iomem_ready) || rom_ready || ram_ready || spimemio_cfgreg_sel ||
+	assign cpu_ready = gpio_ready || rom_ready || ram_ready || spimemio_cfgreg_sel ||
 			simpleuart_reg_div_sel || (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
 
-	assign cpu_rdata = (iomem_valid && iomem_ready) ? iomem_rdata : rom_ready ? rom_rdata : ram_ready ? ram_rdata :
+	assign cpu_rdata = gpio_ready ? gpio_rdata : rom_ready ? rom_rdata : ram_ready ? ram_rdata :
 			spimemio_cfgreg_sel ? spimemio_cfgreg_do : simpleuart_reg_div_sel ? simpleuart_reg_div_do :
 			simpleuart_reg_dat_sel ? simpleuart_reg_dat_do : 32'h 0000_0000;
 
@@ -137,7 +128,7 @@ module picosoc #(
 		.CATCH_ILLINSN       (1), //1 ++
 		.ENABLE_TRACE        (0), //0
 		.REGS_INIT_ZERO      (0)  //0
-	) cpu (
+	) ucpu (
 		.clk         (clk        ), //i
 		.resetn      (resetn     ), //i
 		.mem_valid   (cpu_valid  ), //o CPU готов общаться
@@ -153,7 +144,7 @@ module picosoc #(
 	if(RAM_TYPE == 0) begin
 	rambram #(
 		.WORDS(RAM_WORDS)
-	) ram (
+	) uram (
 		.clk(clk),
 		.wen((cpu_valid && !cpu_ready && cpu_addr < 4*RAM_WORDS) ? cpu_wstrb : 4'b0),
 		.valid(cpu_valid && !cpu_ready && cpu_addr < 4*RAM_WORDS),
@@ -165,7 +156,7 @@ module picosoc #(
 	end else if(RAM_TYPE == 1) begin
 	ramspram #(
 		.WORDS(RAM_WORDS)
-	) ram (
+	) uram (
 		.clk(clk),
 		.wen((cpu_valid && !cpu_ready && cpu_addr < 4*RAM_WORDS) ? cpu_wstrb : 4'b0),
 		.valid(cpu_valid && !cpu_ready && cpu_addr < 4*RAM_WORDS),
@@ -179,7 +170,7 @@ module picosoc #(
 	if(ROM_TYPE == 0) begin
 	rombram #(
 		.WORDS(ROM_WORDS)
-	) rom (
+	) urom (
 		.clk(clk),
 		.resetn (resetn),
 		.valid(cpu_valid && cpu_addr >= 4*RAM_WORDS && cpu_addr < 32'h 0200_0000),
@@ -188,7 +179,7 @@ module picosoc #(
 		.rdata(rom_rdata)
 	);
 	end else if(ROM_TYPE == 1) begin
-	spimemio rom (
+	spimemio urom (
 		.clk    (clk),
 		.resetn (resetn),
 		.valid  (cpu_valid && cpu_addr >= 4*RAM_WORDS && cpu_addr < 32'h 0200_0000),
@@ -238,20 +229,16 @@ module picosoc #(
 		.reg_dat_wait(simpleuart_reg_dat_wait)
 	);
 
-	always @(posedge clk) begin
-		if (!resetn) begin
-			gpio <= 0;
-		end else begin
-			iomem_ready <= 0;
-			if (iomem_valid && !iomem_ready && iomem_addr[31:24] == 8'h 03) begin
-				iomem_ready <= 1;
-				iomem_rdata <= gpio;
-				if (iomem_wstrb[0]) gpio[ 7: 0] <= iomem_wdata[ 7: 0];
-				if (iomem_wstrb[1]) gpio[15: 8] <= iomem_wdata[15: 8];
-				if (iomem_wstrb[2]) gpio[23:16] <= iomem_wdata[23:16];
-				if (iomem_wstrb[3]) gpio[31:24] <= iomem_wdata[31:24];
-			end
-		end
-	end
+	gpio ugpio (
+		.clk(clk),
+		.resetn(resetn),
+		.valid(cpu_valid && (cpu_addr[31:24] > 8'h 01)),
+		.ready(gpio_ready),
+		.wen(cpu_wstrb),
+		.addr (cpu_addr),
+		.wdata(cpu_wdata),
+		.rdata(gpio_rdata),
+		.gpo (gpio)
+	);
 
 endmodule

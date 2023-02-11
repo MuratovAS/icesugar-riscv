@@ -40,8 +40,8 @@ module top (
 	//Source = 48MHz, CLKHF_DIV = 2’b00 : 00 = div1, 01 = div2, 10 = div4, 11 = div8 ; Default = “00”
 	//SB_HFOSC SB_HFOSC_inst(
 	SB_HFOSC #(.CLKHF_DIV("0b10")) SB_HFOSC_inst (
-		.CLKHFEN(1),
-		.CLKHFPU(1),
+		.CLKHFEN(32'b1),
+		.CLKHFPU(32'b1),
 		.CLKHF(clk_12m)
 	);
 

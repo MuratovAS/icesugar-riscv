@@ -8,7 +8,7 @@ module rombram #(
 	input resetn,
 	input valid,
 	output ready,
-	input [log2(WORDS)-1:0] addr,
+	input [log2(WORDS-1)-1:0] addr,
 	output [31:0] rdata
 );
 	reg ready;
@@ -19,7 +19,7 @@ module rombram #(
         $readmemh("build/icesugar-riscv_fw.bram",mem); //FIXME:
 	
 	reg [2:0] state = 3'd0;
-	reg [log2(WORDS)-1:0] pointer;
+	reg [log2(WORDS-1)-1:0] pointer;
 
 	always @(posedge clk) 
 	begin
