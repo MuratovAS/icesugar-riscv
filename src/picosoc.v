@@ -31,11 +31,12 @@
 `endif
 
 module picosoc #(
-	parameter ROM_TYPE = 0,
+	//value is set
+	parameter ROM_TYPE = 0, // 0: BRAM ; 1: SPI
 	parameter integer ROM_WORDS = 8192, //KByte
 	parameter [31:0] ROM_ADDR = 32'h 0010_0000, // 1 MB into flash
 
-	parameter RAM_TYPE = 1,
+	parameter RAM_TYPE = 1, // 0: BRAM ; 1: SPRAM
 	parameter integer RAM_WORDS = 131072, //KByte
 
 	parameter [31:0] IRQ_ADDR = 32'h 0000_0000,
@@ -60,7 +61,6 @@ module picosoc #(
 	output [3:0] flash_do,
 	input  [3:0] flash_di
 );
-	reg [31:0] 	gpio;
 	reg [31:0] irq;
 	wire irq_stall = 0;
 	wire irq_uart = 0;

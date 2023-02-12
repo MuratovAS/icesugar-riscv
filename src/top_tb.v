@@ -43,10 +43,7 @@ module testbench;
 		cycle_cnt <= cycle_cnt + 1;
 	end
 
-	wire led1, led2, led3, led4, led5;
-	wire ledr_n, ledg_n;
-
-	wire [6:0] leds = {!ledg_n, !ledr_n, led5, led4, led3, led2, led1};
+	wire [6:0] leds;
 
 	wire ser_rx;
 	wire ser_tx;
@@ -58,27 +55,17 @@ module testbench;
 	wire flash_io2;
 	wire flash_io3;
 
-
 	always @(leds) begin
 		#1 $display("%b", leds);
 	end
-
-	top #(
-		// We limit the amount of memory in simulation
-		// in order to avoid reduce simulation time
-		// required for intialization of RAM
-		.MEM_WORDS(256)
-	) uut (
-		.clk      (clk      ),
-		.led1     (led1     ),
-		.led2     (led2     ),
-		.led3     (led3     ),
-		.led4     (led4     ),
-		.led5     (led5     ),
-		.ledr_n   (ledr_n   ),
-		.ledg_n   (ledg_n   ),
-		.ser_rx   (ser_rx   ),
-		.ser_tx   (ser_tx   ),
+	
+	top uut (
+		.clk (clk),
+		.LED_R (leds[0]),
+		.LED_G (leds[1]),
+		.LED_B (leds[2]),
+		.uart_rx   (ser_rx   ),
+		.uart_tx   (ser_tx   ),
 		.flash_csb(flash_csb),
 		.flash_clk(flash_clk),
 		.flash_io0(flash_io0),
@@ -86,6 +73,10 @@ module testbench;
 		.flash_io2(flash_io2),
 		.flash_io3(flash_io3)
 	);
+	defparam uut.soc.ROM_TYPE = 0; // 0: BRAM ; 1: SPI
+	defparam uut.soc.RAM_TYPE = 1; // 0: BRAM ; 1: SPRAM
+	defparam uut.soc.ROM_WORDS = 8192; // KB
+	defparam uut.soc.RAM_WORDS = 255; // KB
 
 	spiflash spiflash (
 		.csb(flash_csb),

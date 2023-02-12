@@ -39,8 +39,8 @@ all: build_fw synthesis
 
 synthesis: $(BUILD_DIR) $(BUILD_DIR)/$(PROJ).bin
 # rules for building the blif file
-$(BUILD_DIR)/%.json: $(TOP_FILE) $(FPGA_SRC)/*.v $(FPGA_SRC)/ext/*.v
-	yosys -q -l $(BUILD_DIR)/build.log -p '$(SERIES) $(ROUTE_ARG) -top top -json $@; show -format dot -prefix $(BUILD_DIR)/$(PROJ)' $< 
+$(BUILD_DIR)/%.json: $(TOP_FILE) $(FPGA_SRC)/*.v $(FPGA_SRC)/ext/*.v $(BUILD_DIR)/$(PROJ)_fw.bram
+	yosys -q -f "verilog -DFW_IMG_PATH=\"$(BUILD_DIR)/$(PROJ)_fw.bram\"" -l $(BUILD_DIR)/build.log -p '$(SERIES) $(ROUTE_ARG) -top top -json $@; show -format dot -prefix $(BUILD_DIR)/$(PROJ)' $<
 # asc
 $(BUILD_DIR)/%.asc: $(BUILD_DIR)/%.json $(PIN_DEF)
 	nextpnr-ice40 -l $(BUILD_DIR)/nextpnr.log --seed $(SEED) --freq $(FREQ) --package $(PACKAGE) --$(DEVICE) --asc $@ --pcf $(PIN_DEF) --json $<
@@ -56,8 +56,8 @@ $(BUILD_DIR)/%.vcd: $(BUILD_DIR)/testbench.out $(BUILD_DIR)/$(PROJ)_fw.hex
 	vvp -v -M $(TOOLCHAIN_PATH)/tools-oss-cad-suite/lib/ivl $< +firmware=$(BUILD_DIR)/$(PROJ)_fw.hex
 	mv ./*.vcd $(BUILD_DIR)
 
-$(BUILD_DIR)/testbench.out: $(FPGA_SRC)/*.v $(FPGA_SRC)/ext/*.v
-	iverilog -o $@ -DNO_ICE40_DEFAULT_ASSIGNMENTS -B $(TOOLCHAIN_PATH)/tools-oss-cad-suite/lib/ivl $(TOOLCHAIN_PATH)/tools-oss-cad-suite/share/yosys/ice40/cells_sim.v $(TOP_FILE) $(TB_FILE)
+$(BUILD_DIR)/testbench.out: $(FPGA_SRC)/*.v $(FPGA_SRC)/ext/*.v $(BUILD_DIR)/$(PROJ)_fw.bram
+	iverilog -o $@ -DSIM -DNO_ICE40_DEFAULT_ASSIGNMENTS -DFW_IMG_PATH=\"$(BUILD_DIR)/$(PROJ)_fw.bram\" -B $(TOOLCHAIN_PATH)/tools-oss-cad-suite/lib/ivl $(TOOLCHAIN_PATH)/tools-oss-cad-suite/share/yosys/ice40/cells_sim.v $(TOP_FILE) $(TB_FILE)
 
 # Flash memory firmware
 flash: $(BUILD_DIR)/$(PROJ).bin

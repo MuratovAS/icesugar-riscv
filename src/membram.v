@@ -1,7 +1,12 @@
 // Implementation note:
 // Replace the following modules with wrappers for your SRAM cells.
 
+`ifndef FW_IMG_PATH
+`define FW_IMG_PATH ""
+`endif
+
 module rombram #(
+	parameter MEM_HEX = `FW_IMG_PATH,
 	parameter integer WORDS = 256
 ) (
 	input clk,
@@ -15,9 +20,9 @@ module rombram #(
 	reg [31:0] rdata;
 
 	reg [7:0] mem [0:WORDS-1];
-	initial
-        $readmemh("build/icesugar-riscv_fw.bram",mem); //FIXME:
-	
+	initial begin
+        	$readmemh(MEM_HEX,mem); //FIXME:
+	end
 	reg [2:0] state = 3'd0;
 	reg [log2(WORDS-1)-1:0] pointer;
 
