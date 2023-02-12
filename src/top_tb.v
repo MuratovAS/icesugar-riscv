@@ -56,7 +56,7 @@ module testbench;
 	wire flash_io3;
 
 	always @(leds) begin
-		#1 $display("%b", leds);
+		#1 $display("leds=%b", leds);
 	end
 	
 	top uut (

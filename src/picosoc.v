@@ -1,22 +1,3 @@
-/*
- *  PicoSoC - A simple example SoC using PicoRV32
- *
- *  Copyright (C) 2017  Claire Xenia Wolf <claire@yosyshq.com>
- *
- *  Permission to use, copy, modify, and/or distribute this software for any
- *  purpose with or without fee is hereby granted, provided that the above
- *  copyright notice and this permission notice appear in all copies.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- *  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- *  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- *  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- */
-
 `include "src/ext/picorv32.v"
 
 `include "src/membram.v"
@@ -80,27 +61,7 @@ module picosoc #(
 	wire [31:0] cpu_addr;
 	wire [31:0] cpu_wdata;
 	wire [3:0] cpu_wstrb;
-	wire [31:0] cpu_rdata;
-
-	wire rom_ready, ram_ready, gpio_ready;
-	wire [31:0] rom_rdata, ram_rdata, gpio_rdata;
-
-	wire spimemio_cfgreg_sel = cpu_valid && (cpu_addr == 32'h 0200_0000);
-	wire [31:0] spimemio_cfgreg_do;
-
-	wire        simpleuart_reg_div_sel = cpu_valid && (cpu_addr == 32'h 0200_0004);
-	wire [31:0] simpleuart_reg_div_do;
-
-	wire        simpleuart_reg_dat_sel = cpu_valid && (cpu_addr == 32'h 0200_0008);
-	wire [31:0] simpleuart_reg_dat_do;
-	wire        simpleuart_reg_dat_wait;
-
-	assign cpu_ready = gpio_ready || rom_ready || ram_ready || spimemio_cfgreg_sel ||
-			simpleuart_reg_div_sel || (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
-
-	assign cpu_rdata = gpio_ready ? gpio_rdata : rom_ready ? rom_rdata : ram_ready ? ram_rdata :
-			spimemio_cfgreg_sel ? spimemio_cfgreg_do : simpleuart_reg_div_sel ? simpleuart_reg_div_do :
-			simpleuart_reg_dat_sel ? simpleuart_reg_dat_do : 32'h 0000_0000;
+	reg [31:0] cpu_rdata;
 
 	picorv32 #(
 		.STACKADDR(STACK_ADDR),
@@ -141,6 +102,9 @@ module picosoc #(
 		.irq         (irq        )  //i
 	);
 
+
+	wire ram_ready;
+	wire [31:0] ram_rdata;
 	if(RAM_TYPE == 0) begin
 	rambram #(
 		.WORDS(RAM_WORDS)
@@ -167,6 +131,11 @@ module picosoc #(
 	);
 	end
 
+
+	wire rom_ready;
+	wire [31:0] rom_rdata;
+	wire spimemio_cfgreg_sel = cpu_valid && (cpu_addr == 32'h 0200_0000);
+	wire [31:0] spimemio_cfgreg_do;
 	if(ROM_TYPE == 0) begin
 	rombram #(
 		.WORDS(ROM_WORDS)
@@ -211,6 +180,13 @@ module picosoc #(
 	);
 	end
 
+
+	wire        simpleuart_reg_div_sel = cpu_valid && (cpu_addr == 32'h 0200_0004);
+	wire [31:0] simpleuart_reg_div_do;
+
+	wire        simpleuart_reg_dat_sel = cpu_valid && (cpu_addr == 32'h 0200_0008);
+	wire [31:0] simpleuart_reg_dat_do;
+	wire        simpleuart_reg_dat_wait;
 	simpleuart simpleuart (
 		.clk         (clk         ),
 		.resetn      (resetn      ),
@@ -229,6 +205,9 @@ module picosoc #(
 		.reg_dat_wait(simpleuart_reg_dat_wait)
 	);
 
+
+	wire gpio_ready;
+	wire [31:0] gpio_rdata;
 	gpio ugpio (
 		.clk(clk),
 		.resetn(resetn),
@@ -241,4 +220,28 @@ module picosoc #(
 		.gpo (gpio)
 	);
 
+
+	assign cpu_ready = gpio_ready || rom_ready || ram_ready || spimemio_cfgreg_sel ||
+			simpleuart_reg_div_sel || (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
+
+	// data mux
+	reg [5:0] mux_rdata;
+	always @(*)
+		mux_rdata <= {spimemio_cfgreg_sel,
+					  simpleuart_reg_div_sel,
+					  simpleuart_reg_dat_sel,
+					  gpio_ready,
+					  rom_ready,
+					  ram_ready};
+
+	always @(*)
+		casez(mux_rdata)
+			6'b1zzzzz: cpu_rdata <= spimemio_cfgreg_do;
+			6'b01zzzz: cpu_rdata <= simpleuart_reg_div_do;
+			6'b001zzz: cpu_rdata <= simpleuart_reg_dat_do;
+			6'b0001zz: cpu_rdata <= gpio_rdata;
+			6'b00001z: cpu_rdata <= rom_rdata;
+			6'b000001: cpu_rdata <= ram_rdata;
+			default: cpu_rdata <= 32'h0000_0000;
+		endcase
 endmodule
