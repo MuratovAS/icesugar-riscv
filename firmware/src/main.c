@@ -2,7 +2,7 @@
 #include "stdio.h"
 //#include "irq.h"
 
-//#define SPIROM
+#define SPIROM
 
 #define MEM_TOTAL 0x20000 /* 128 KB */
 

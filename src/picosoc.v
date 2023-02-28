@@ -13,7 +13,7 @@
 
 module picosoc #(
 	//value is set
-	parameter ROM_TYPE = 0, // 0: BRAM ; 1: SPI
+	parameter ROM_TYPE = 1, // 0: BRAM ; 1: SPI
 	parameter integer ROM_WORDS = 8192, //KByte
 	parameter [31:0] ROM_ADDR = 32'h 0010_0000, // 1 MB into flash
 
