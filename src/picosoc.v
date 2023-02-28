@@ -15,12 +15,12 @@ module picosoc #(
 	//value is set
 	parameter ROM_TYPE = 1, // 0: BRAM ; 1: SPI
 	parameter integer ROM_WORDS = 8192, //KByte
-	parameter [31:0] ROM_ADDR = 32'h 0010_0000, // 1 MB into flash
+	parameter [31:0] ROM_ADDR = 32'h0010_0000, // 1 MB into flash
 
 	parameter RAM_TYPE = 1, // 0: BRAM ; 1: SPRAM
 	parameter integer RAM_WORDS = 131072, //KByte
 
-	parameter [31:0] IRQ_ADDR = 32'h 0000_0000,
+	parameter [31:0] IRQ_ADDR = 32'h0000_0000,
 	parameter [31:0] STACK_ADDR = (4*RAM_WORDS)       // end of memory
 )(
 	input clk,
@@ -134,7 +134,7 @@ module picosoc #(
 
 	wire rom_ready;
 	wire [31:0] rom_rdata;
-	wire spimemio_cfgreg_sel = cpu_valid && (cpu_addr == 32'h 0200_0000);
+	wire spimemio_cfgreg_sel = cpu_valid && (cpu_addr == 32'h0200_0000);
 	wire [31:0] spimemio_cfgreg_do;
 	if(ROM_TYPE == 0) begin
 	rombram #(
@@ -142,7 +142,7 @@ module picosoc #(
 	) urom (
 		.clk(clk),
 		.resetn (resetn),
-		.valid(cpu_valid && cpu_addr >= 4*RAM_WORDS && cpu_addr < 32'h 0200_0000),
+		.valid(cpu_valid && cpu_addr >= 4*RAM_WORDS && cpu_addr < 32'h0200_0000),
 		.ready(rom_ready),
 		.addr(cpu_addr[12:0]),
 		.rdata(rom_rdata)
@@ -151,7 +151,7 @@ module picosoc #(
 	spimemio urom (
 		.clk    (clk),
 		.resetn (resetn),
-		.valid  (cpu_valid && cpu_addr >= 4*RAM_WORDS && cpu_addr < 32'h 0200_0000),
+		.valid  (cpu_valid && cpu_addr >= 4*RAM_WORDS && cpu_addr < 32'h0200_0000),
 		.ready  (rom_ready),
 		.addr   (cpu_addr[23:0]),
 		.rdata  (rom_rdata),
@@ -159,32 +159,21 @@ module picosoc #(
 		.flash_csb    (flash_csb   ),
 		.flash_clk    (flash_clk   ),
 
-		.flash_io0_oe (flash_oe[0]),
-		.flash_io1_oe (flash_oe[1]),
-		.flash_io2_oe (flash_oe[2]),
-		.flash_io3_oe (flash_oe[3]),
+		.flash_oe (flash_oe),
+		.flash_do (flash_do),
+		.flash_di (flash_di),
 
-		.flash_io0_do (flash_do[0]),
-		.flash_io1_do (flash_do[1]),
-		.flash_io2_do (flash_do[2]),
-		.flash_io3_do (flash_do[3]),
-
-		.flash_io0_di (flash_di[0]),
-		.flash_io1_di (flash_di[1]),
-		.flash_io2_di (flash_di[2]),
-		.flash_io3_di (flash_di[3]),
-
-		.cfgreg_we(spimemio_cfgreg_sel ? cpu_wstrb : 4'b 0000),
+		.cfgreg_we(spimemio_cfgreg_sel ? cpu_wstrb : 4'b0000),
 		.cfgreg_di(cpu_wdata),
 		.cfgreg_do(spimemio_cfgreg_do)
 	);
 	end
 
 
-	wire        simpleuart_reg_div_sel = cpu_valid && (cpu_addr == 32'h 0200_0004);
+	wire        simpleuart_reg_div_sel = cpu_valid && (cpu_addr == 32'h0200_0004);
 	wire [31:0] simpleuart_reg_div_do;
 
-	wire        simpleuart_reg_dat_sel = cpu_valid && (cpu_addr == 32'h 0200_0008);
+	wire        simpleuart_reg_dat_sel = cpu_valid && (cpu_addr == 32'h0200_0008);
 	wire [31:0] simpleuart_reg_dat_do;
 	wire        simpleuart_reg_dat_wait;
 	simpleuart simpleuart (
@@ -194,11 +183,11 @@ module picosoc #(
 		.ser_tx      (ser_tx      ),
 		.ser_rx      (ser_rx      ),
 
-		.reg_div_we  (simpleuart_reg_div_sel ? cpu_wstrb : 4'b 0000),
+		.reg_div_we  (simpleuart_reg_div_sel ? cpu_wstrb : 4'b0000),
 		.reg_div_di  (cpu_wdata),
 		.reg_div_do  (simpleuart_reg_div_do),
 
-		.reg_dat_we  (simpleuart_reg_dat_sel ? cpu_wstrb[0] : 1'b 0),
+		.reg_dat_we  (simpleuart_reg_dat_sel ? cpu_wstrb[0] : 1'b0),
 		.reg_dat_re  (simpleuart_reg_dat_sel && !cpu_wstrb),
 		.reg_dat_di  (cpu_wdata),
 		.reg_dat_do  (simpleuart_reg_dat_do),
@@ -211,7 +200,7 @@ module picosoc #(
 	gpio ugpio (
 		.clk(clk),
 		.resetn(resetn),
-		.valid(cpu_valid && (cpu_addr[31:24] > 8'h 01)),
+		.valid(cpu_valid && (cpu_addr[31:24] > 8'h01)),
 		.ready(gpio_ready),
 		.wen(cpu_wstrb),
 		.addr (cpu_addr),
