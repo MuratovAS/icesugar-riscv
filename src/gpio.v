@@ -19,7 +19,7 @@ module gpio
 			gpo <= 0;
 		end else begin
 			ready <= 0;
-			if (valid && !ready && addr[31:24] == 8'h 03) begin
+			if (valid && !ready && addr[31:24] == 8'h03) begin
 				ready <= 1;
 				rdata <= gpo;
 				if (wen[0]) gpo[ 7: 0] <= wdata[ 7: 0];

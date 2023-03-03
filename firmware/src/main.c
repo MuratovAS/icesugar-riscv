@@ -51,7 +51,7 @@ void cmd_memtest()
 			if (*(base_word + word) != xorshift32(&state)) {
 				print(" ***FAILED WORD*** at ");
 				print_hex(4*word, 4);
-				print("\n");
+				print("\n\r");
 				return;
 			}
 		}
@@ -68,11 +68,11 @@ void cmd_memtest()
 		if (*(base_byte + byte) != (uint8_t) byte) {
 			print(" ***FAILED BYTE*** at ");
 			print_hex(byte, 4);
-			print("\n");
+			print("\n\r");
 			return;
 		}
 	}
-	print(" passed\n");
+	print(" passed\n\r");
 }
 
 uint32_t cmd_benchmark(bool verbose, uint32_t *instns_p)
@@ -116,15 +116,15 @@ uint32_t cmd_benchmark(bool verbose, uint32_t *instns_p)
 	{
 		print("Cycles: 0x");
 		print_hex(cycles_end - cycles_begin, 8);
-		putchar('\n');
+		print("\n\r");
 
 		print("Instns: 0x");
 		print_hex(instns_end - instns_begin, 8);
-		putchar('\n');
+		print("\n\r");
 
 		print("Chksum: 0x");
 		print_hex(x32, 8);
-		putchar('\n');
+		print("\n\r");
 	}
 
 	if (instns_p)
@@ -143,34 +143,34 @@ void cmd_read_flash_id()
 		putchar(' ');
 		print_hex(buffer[i], 2);
 	}
-	putchar('\n');
+	print("\n\r");
 }
 
 void cmd_print_spi_state()
 {
-	print("SPI State:\n");
+	print("SPI State:\n\r");
 
 	print("  LATENCY ");
 	print_dec((reg_spictrl >> 16) & 15);
-	print("\n");
+	print("\n\r");
 
 	print("  DDR ");
 	if ((reg_spictrl & (1 << 22)) != 0)
-		print("ON\n");
+		print("ON\n\r");
 	else
-		print("OFF\n");
+		print("OFF\n\r");
 
 	print("  QSPI ");
 	if ((reg_spictrl & (1 << 21)) != 0)
-		print("ON\n");
+		print("ON\n\r");
 	else
-		print("OFF\n");
+		print("OFF\n\r");
 
 	print("  CRM ");
 	if ((reg_spictrl & (1 << 20)) != 0)
-		print("ON\n");
+		print("ON\n\r");
 	else
-		print("OFF\n");
+		print("OFF\n\r");
 }
 
 void print_reg_bit(int val, const char *name)
@@ -183,12 +183,12 @@ void print_reg_bit(int val, const char *name)
 	}
 
 	putchar(val ? '1' : '0');
-	putchar('\n');
+	print("\n\r");
 }
 
 void cmd_read_flash_regs()
 {
-	putchar('\n');
+	print("\n\r");
 
 	uint8_t sr1 = cmd_read_flash_reg(0x05);
 	uint8_t sr2 = cmd_read_flash_reg(0x35);
@@ -202,7 +202,7 @@ void cmd_read_flash_regs()
 	print_reg_bit(sr1 & 0x20, "S5  (TB)");
 	print_reg_bit(sr1 & 0x40, "S6  (SEC)");
 	print_reg_bit(sr1 & 0x80, "S7  (SRP)");
-	putchar('\n');
+	print("\n\r");
 
 	print_reg_bit(sr2 & 0x01, "S8  (SRL)");
 	print_reg_bit(sr2 & 0x02, "S9  (QE)");
@@ -212,7 +212,7 @@ void cmd_read_flash_regs()
 	print_reg_bit(sr2 & 0x20, "S13 (LB3)");
 	print_reg_bit(sr2 & 0x40, "S14 (CMP)");
 	print_reg_bit(sr2 & 0x80, "S15 (SUS)");
-	putchar('\n');
+	print("\n\r");
 
 	print_reg_bit(sr3 & 0x01, "S16 ----");
 	print_reg_bit(sr3 & 0x02, "S17 ----");
@@ -222,7 +222,7 @@ void cmd_read_flash_regs()
 	print_reg_bit(sr3 & 0x20, "S21 (DRV0)");
 	print_reg_bit(sr3 & 0x40, "S22 (DRV1)");
 	print_reg_bit(sr3 & 0x80, "S23 (HOLD)");
-	putchar('\n');
+	print("\n\r");
 }
 #endif
 
@@ -250,19 +250,19 @@ void stats(void)
 	__asm__ volatile ("rdcycle %0; rdinstret %1;" : "=r"(num_cycles), "=r"(num_instr));
 	print_str("Cycle counter ........");
 	stats_print_dec(num_cycles, 8, false);
-	print_str("\nInstruction counter ..");
+	print_str("\n\rInstruction counter ..");
 	stats_print_dec(num_instr, 8, false);
-	print_str("\nCPI: ");
+	print_str("\n\rCPI: ");
 	stats_print_dec((num_cycles / num_instr), 0, false);
 	print_str(".");
 	stats_print_dec(((100 * num_cycles) / num_instr) % 100, 2, true);
-	print_str("\n");
+	print_str("\n\r");
 
 }
 
 void cmd_echo()
 {
-	print("Return to menu by sending '!'\n\n");
+	print("Return to menu by sending '!'\n\r\n\r");
 	char c;
 	while ((c = getchar()) != '!')
 		putchar(c);
@@ -270,52 +270,58 @@ void cmd_echo()
 
 void main()
 {
-	reg_leds = 0b0000000000000001;
+	/*char c;
+	while ((c = getchar()) != '!')
+	{
+		putchar(c);
+		putchar(c);
+	}*/
 
-	reg_uart_clkdiv = 104;
-	print("Booting..\n");
+	reg_leds = 0b0000000000000101;
+
+	print("Booting..\n\r");
 
 	#ifdef SPIROM
 	set_flash_qspi_flag();
 	#endif
 
-	while (getchar_prompt("Press ENTER to continue..\n") != '\r') { }
+	//while (getchar_prompt("Press ENTER to continue..\n\r") != '\r') { }
 
-	print("\n");
-	print("  ____  _          ____         ____\n");
-	print(" |  _ \\(_) ___ ___/ ___|  ___  / ___|\n");
-	print(" | |_) | |/ __/ _ \\___ \\ / _ \\| |\n");
-	print(" |  __/| | (_| (_) |__) | (_) | |___\n");
-	print(" |_|   |_|\\___\\___/____/ \\___/ \\____|\n");
-	print("\n");
+	print("\n\r");
+	print("  ____  _          ____         ____\n\r");
+	print(" |  _ \\(_) ___ ___/ ___|  ___  / ___|\n\r");
+	print(" | |_) | |/ __/ _ \\___ \\ / _ \\| |\n\r");
+	print(" |  __/| | (_| (_) |__) | (_) | |___\n\r");
+	print(" |_|   |_|\\___\\___/____/ \\___/ \\____|\n\r");
+	print("\n\r");
 
 	print("Total memory: ");
 	print_dec(MEM_TOTAL / 1024);
-	print(" KiB\n");
-	print("\n");
+	print(" KiB\n\r");
+	print("\n\r");
 
 	while (1)
 	{
-		print("\n");
+		print("\n\r");
 
-		print("Select an action:\n");
-		print("\n");
+		print("Select an action:\n\r");
+		print("\n\r");
 
 		#ifdef SPIROM
-		print("   [1] Read SPI Flash ID\n");
-		print("   [2] Read SPI Config Regs\n");
-		print("   [3] Switch to default mode\n");
-		print("   [4] Switch to Dual I/O mode\n");
-		print("   [5] Switch to Quad I/O mode\n");
-		print("   [6] Switch to Quad DDR mode\n");
-		print("   [7] Toggle continuous read mode\n");
-		print("   [S] Print SPI state\n");
+		print("   [1] Read SPI Flash ID\n\r");
+		print("   [2] Read SPI Config Regs\n\r");
+		print("   [3] Switch to default mode\n\r");
+		print("   [4] Switch to Dual I/O mode\n\r");
+		print("   [5] Switch to Quad I/O mode\n\r");
+		print("   [6] Switch to Quad DDR mode\n\r");
+		print("   [7] Toggle continuous read mode\n\r");
+		print("   [S] Print SPI state\n\r");
 		#endif
-		print("   [b] Run benchmark\n");
-		print("   [m] Run Memtest\n");
-		print("   [e] Echo UART\n");
-		print("   [s] Stats\n");
-		print("\n");
+		print("   [b] Run benchmark\n\r");
+		print("   [m] Run Memtest\n\r");
+		print("   [e] Echo UART\n\r");
+		print("   [s] Stats\n\r");
+		print("\n\r");
 
 		for (int rep = 10; rep > 0; rep--)
 		{
@@ -323,11 +329,10 @@ void main()
 			char cmd = getchar();
 			if (cmd > 32 && cmd < 127)
 				putchar(cmd);
-			print("\n");
+			print("\n\r");
 
 			switch (cmd)
 			{
-
 		#ifdef SPIROM
 			case '1':
 				cmd_read_flash_id();

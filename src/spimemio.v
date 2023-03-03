@@ -235,7 +235,7 @@ module spimemio (
 			case (state)
 				0: begin
 					din_valid <= 1;
-					din_data <= 8'h ff;
+					din_data <= 8'hff;
 					din_tag <= 0;
 					if (din_ready) begin
 						din_valid <= 0;
@@ -250,7 +250,7 @@ module spimemio (
 				end
 				2: begin
 					din_valid <= 1;
-					din_data <= 8'h ab;
+					din_data <= 8'hab;
 					din_tag <= 0;
 					if (din_ready) begin
 						din_valid <= 0;
@@ -268,10 +268,10 @@ module spimemio (
 					din_valid <= 1;
 					din_tag <= 0;
 					case ({config_ddr, config_qspi})
-						2'b11: din_data <= 8'h ED;
-						2'b01: din_data <= 8'h EB;
-						2'b10: din_data <= 8'h BB;
-						2'b00: din_data <= 8'h 03;
+						2'b11: din_data <= 8'hED;
+						2'b01: din_data <= 8'hEB;
+						2'b10: din_data <= 8'hBB;
+						2'b00: din_data <= 8'h03;
 					endcase
 					if (din_ready) begin
 						din_valid <= 0;
@@ -313,7 +313,7 @@ module spimemio (
 				8: begin
 					din_valid <= 1;
 					din_tag <= 0;
-					din_data <= config_cont ? 8'h A5 : 8'h FF;
+					din_data <= config_cont ? 8'hA5 : 8'hFF;
 					if (din_ready) begin
 						din_rd <= 1;
 						din_data <= config_dummy;
@@ -331,7 +331,7 @@ module spimemio (
 				end
 				10: begin
 					din_valid <= 1;
-					din_data <= 8'h 00;
+					din_data <= 8'h00;
 					din_tag <= 2;
 					if (din_ready) begin
 						din_valid <= 0;

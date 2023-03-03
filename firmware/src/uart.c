@@ -7,13 +7,6 @@
 
 #include "uart.h"
 
-void putchar(char c)
-{
-	if (c == '\n')
-		putchar('\r');
-	reg_uart_data = c;
-}
-
 void print(const char *p)
 {
 	while (*p)
@@ -103,7 +96,42 @@ void print_chr(const char p)
 	putchar(p);
 }
 
+// char getchar()
+// {
+// 	return getchar_prompt(0);
+// }
+
+// void putchar(char c)
+// {
+// 	reg_uart_data = c;
+// }
+
+// registers
+#define UART_DATA (*(volatile uint32_t*)0x02000008)
+#define UART_STAT (*(volatile uint32_t*)0x02000004)
+
+// bits
+#define UART_STAT_TXE 0b00000001
+#define UART_STAT_RXF 0b00000010
+
+void putchar(char c)
+{
+    while ((UART_STAT & UART_STAT_TXE))
+    {
+        #if defined(WDT)
+            WDTRST;
+        #endif
+    }
+    UART_DATA = c;
+}
+
 char getchar()
 {
-	return getchar_prompt(0);
+    while (!(UART_STAT & UART_STAT_RXF))
+    {
+        #if defined(WDT)
+            WDTRST;
+        #endif
+    }
+	return UART_DATA;
 }

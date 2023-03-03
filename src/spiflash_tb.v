@@ -115,13 +115,13 @@ module spiflash (
 			if (bytecount == 1) begin
 				spi_cmd = buffer;
 
-				if (spi_cmd == 8'h ab)
+				if (spi_cmd == 8'hab)
 					powered_up = 1;
 
-				if (spi_cmd == 8'h b9)
+				if (spi_cmd == 8'hb9)
 					powered_up = 0;
 
-				if (spi_cmd == 8'h ff)
+				if (spi_cmd == 8'hff)
 					xip_cmd = 0;
 			end
 
@@ -155,7 +155,7 @@ module spiflash (
 					spi_addr[7:0] = buffer;
 
 				if (bytecount == 5) begin
-					xip_cmd = (buffer == 8'h a5) ? spi_cmd : 8'h 00;
+					xip_cmd = (buffer == 8'ha5) ? spi_cmd : 8'h00;
 					mode = mode_dspi_wr;
 					dummycount = latency;
 				end
@@ -180,7 +180,7 @@ module spiflash (
 					spi_addr[7:0] = buffer;
 
 				if (bytecount == 5) begin
-					xip_cmd = (buffer == 8'h a5) ? spi_cmd : 8'h 00;
+					xip_cmd = (buffer == 8'ha5) ? spi_cmd : 8'h00;
 					mode = mode_qspi_wr;
 					dummycount = latency;
 				end
@@ -205,7 +205,7 @@ module spiflash (
 					spi_addr[7:0] = buffer;
 
 				if (bytecount == 5) begin
-					xip_cmd = (buffer == 8'h a5) ? spi_cmd : 8'h 00;
+					xip_cmd = (buffer == 8'ha5) ? spi_cmd : 8'h00;
 					mode = mode_qspi_ddr_wr;
 					dummycount = latency;
 				end
