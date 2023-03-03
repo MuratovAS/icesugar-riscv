@@ -1,109 +1,18 @@
-#include "main.h"
-#include "stdio.h"
-//#include "irq.h"
-
 #define SPIROM
-
 #define MEM_TOTAL 0x20000 /* 128 KB */
 
+#ifdef SPIROM
+	#include "spimem.h"
+#endif
+#include "main.h"
+#include "uart.h"
+//#include "irq.h"
 
 // a pointer to this is a null pointer, but the compiler does not
 // know that because "sram" is a linker symbol from sections.lds.
 extern uint32_t sram;
 
-#define reg_spictrl (*(volatile uint32_t*)0x02000000)
-#define reg_uart_clkdiv (*(volatile uint32_t*)0x02000004)
 #define reg_leds (*(volatile uint32_t*)0x03000000)
-
-// --------------------------------------------------------
-
-extern uint32_t flashio_worker_begin;
-extern uint32_t flashio_worker_end;
-
-void flashio(uint8_t *data, int len, uint8_t wrencmd)
-{
-	uint32_t func[&flashio_worker_end - &flashio_worker_begin];
-
-	uint32_t *src_ptr = &flashio_worker_begin;
-	uint32_t *dst_ptr = func;
-
-	while (src_ptr != &flashio_worker_end)
-		*(dst_ptr++) = *(src_ptr++);
-
-	((void(*)(uint8_t*, uint32_t, uint32_t))func)(data, len, wrencmd);
-}
-
-
-void set_flash_qspi_flag()
-{
-	uint8_t buffer[8];
-
-	// Read Configuration Registers (RDCR1 35h)
-	buffer[0] = 0x35;
-	buffer[1] = 0x00; // rdata
-	flashio(buffer, 2, 0);
-	uint8_t sr2 = buffer[1];
-
-	// Write Enable Volatile (50h) + Write Status Register 2 (31h)
-	buffer[0] = 0x31;
-	buffer[1] = sr2 | 2; // Enable QSPI
-	flashio(buffer, 2, 0x50);
-}
-
-void set_flash_mode_spi()
-{
-	reg_spictrl = (reg_spictrl & ~0x007f0000) | 0x00000000;
-}
-
-void set_flash_mode_dual()
-{
-	reg_spictrl = (reg_spictrl & ~0x007f0000) | 0x00400000;
-}
-
-void set_flash_mode_quad()
-{
-	reg_spictrl = (reg_spictrl & ~0x007f0000) | 0x00240000;
-}
-
-void set_flash_mode_qddr()
-{
-	reg_spictrl = (reg_spictrl & ~0x007f0000) | 0x00670000;
-}
-
-void enable_flash_crm()
-{
-	reg_spictrl |= 0x00100000;
-}
-
-// --------------------------------------------------------
-
-
-void cmd_print_spi_state()
-{
-	print("SPI State:\n");
-
-	print("  LATENCY ");
-	print_dec((reg_spictrl >> 16) & 15);
-	print("\n");
-
-	print("  DDR ");
-	if ((reg_spictrl & (1 << 22)) != 0)
-		print("ON\n");
-	else
-		print("OFF\n");
-
-	print("  QSPI ");
-	if ((reg_spictrl & (1 << 21)) != 0)
-		print("ON\n");
-	else
-		print("OFF\n");
-
-	print("  CRM ");
-	if ((reg_spictrl & (1 << 20)) != 0)
-		print("ON\n");
-	else
-		print("OFF\n");
-}
 
 uint32_t xorshift32(uint32_t *state)
 {
@@ -163,87 +72,8 @@ void cmd_memtest()
 			return;
 		}
 	}
-
 	print(" passed\n");
 }
-
-// --------------------------------------------------------
-
-void cmd_read_flash_id()
-{
-	uint8_t buffer[17] = { 0x9F, /* zeros */ };
-	flashio(buffer, 17, 0);
-
-	for (int i = 1; i <= 16; i++) {
-		putchar(' ');
-		print_hex(buffer[i], 2);
-	}
-	putchar('\n');
-}
-
-// --------------------------------------------------------
-
-
-uint8_t cmd_read_flash_reg(uint8_t cmd)
-{
-	uint8_t buffer[2] = {cmd, 0};
-	flashio(buffer, 2, 0);
-	return buffer[1];
-}
-
-void print_reg_bit(int val, const char *name)
-{
-	for (int i = 0; i < 12; i++) {
-		if (*name == 0)
-			putchar(' ');
-		else
-			putchar(*(name++));
-	}
-
-	putchar(val ? '1' : '0');
-	putchar('\n');
-}
-
-void cmd_read_flash_regs()
-{
-	putchar('\n');
-
-	uint8_t sr1 = cmd_read_flash_reg(0x05);
-	uint8_t sr2 = cmd_read_flash_reg(0x35);
-	uint8_t sr3 = cmd_read_flash_reg(0x15);
-
-	print_reg_bit(sr1 & 0x01, "S0  (BUSY)");
-	print_reg_bit(sr1 & 0x02, "S1  (WEL)");
-	print_reg_bit(sr1 & 0x04, "S2  (BP0)");
-	print_reg_bit(sr1 & 0x08, "S3  (BP1)");
-	print_reg_bit(sr1 & 0x10, "S4  (BP2)");
-	print_reg_bit(sr1 & 0x20, "S5  (TB)");
-	print_reg_bit(sr1 & 0x40, "S6  (SEC)");
-	print_reg_bit(sr1 & 0x80, "S7  (SRP)");
-	putchar('\n');
-
-	print_reg_bit(sr2 & 0x01, "S8  (SRL)");
-	print_reg_bit(sr2 & 0x02, "S9  (QE)");
-	print_reg_bit(sr2 & 0x04, "S10 ----");
-	print_reg_bit(sr2 & 0x08, "S11 (LB1)");
-	print_reg_bit(sr2 & 0x10, "S12 (LB2)");
-	print_reg_bit(sr2 & 0x20, "S13 (LB3)");
-	print_reg_bit(sr2 & 0x40, "S14 (CMP)");
-	print_reg_bit(sr2 & 0x80, "S15 (SUS)");
-	putchar('\n');
-
-	print_reg_bit(sr3 & 0x01, "S16 ----");
-	print_reg_bit(sr3 & 0x02, "S17 ----");
-	print_reg_bit(sr3 & 0x04, "S18 (WPS)");
-	print_reg_bit(sr3 & 0x08, "S19 ----");
-	print_reg_bit(sr3 & 0x10, "S20 ----");
-	print_reg_bit(sr3 & 0x20, "S21 (DRV0)");
-	print_reg_bit(sr3 & 0x40, "S22 (DRV1)");
-	print_reg_bit(sr3 & 0x80, "S23 (HOLD)");
-	putchar('\n');
-}
-
-// --------------------------------------------------------
 
 uint32_t cmd_benchmark(bool verbose, uint32_t *instns_p)
 {
@@ -303,58 +133,98 @@ uint32_t cmd_benchmark(bool verbose, uint32_t *instns_p)
 	return cycles_end - cycles_begin;
 }
 
-// --------------------------------------------------------
-
-
-
-void cmd_benchmark_all()
+#ifdef SPIROM
+void cmd_read_flash_id()
 {
-	uint32_t instns = 0;
+	uint8_t buffer[17] = { 0x9F, /* zeros */ };
+	flashio(buffer, 17, 0);
 
-	print("default   ");
-	set_flash_mode_spi();
-	print_hex(cmd_benchmark(false, &instns), 8);
+	for (int i = 1; i <= 16; i++) {
+		putchar(' ');
+		print_hex(buffer[i], 2);
+	}
 	putchar('\n');
-
-	print("dual      ");
-	set_flash_mode_dual();
-	print_hex(cmd_benchmark(false, &instns), 8);
-	putchar('\n');
-
-	// print("dual-crm  ");
-	// enable_flash_crm();
-	// print_hex(cmd_benchmark(false, &instns), 8);
-	// putchar('\n');
-
-	print("quad      ");
-	set_flash_mode_quad();
-	print_hex(cmd_benchmark(false, &instns), 8);
-	putchar('\n');
-
-	print("quad-crm  ");
-	enable_flash_crm();
-	print_hex(cmd_benchmark(false, &instns), 8);
-	putchar('\n');
-
-	print("qddr      ");
-	set_flash_mode_qddr();
-	print_hex(cmd_benchmark(false, &instns), 8);
-	putchar('\n');
-
-	print("qddr-crm  ");
-	enable_flash_crm();
-	print_hex(cmd_benchmark(false, &instns), 8);
-	putchar('\n');
-
 }
 
-void cmd_echo()
+void cmd_print_spi_state()
 {
-	print("Return to menu by sending '!'\n\n");
-	char c;
-	while ((c = getchar()) != '!')
-		putchar(c);
+	print("SPI State:\n");
+
+	print("  LATENCY ");
+	print_dec((reg_spictrl >> 16) & 15);
+	print("\n");
+
+	print("  DDR ");
+	if ((reg_spictrl & (1 << 22)) != 0)
+		print("ON\n");
+	else
+		print("OFF\n");
+
+	print("  QSPI ");
+	if ((reg_spictrl & (1 << 21)) != 0)
+		print("ON\n");
+	else
+		print("OFF\n");
+
+	print("  CRM ");
+	if ((reg_spictrl & (1 << 20)) != 0)
+		print("ON\n");
+	else
+		print("OFF\n");
 }
+
+void print_reg_bit(int val, const char *name)
+{
+	for (int i = 0; i < 12; i++) {
+		if (*name == 0)
+			putchar(' ');
+		else
+			putchar(*(name++));
+	}
+
+	putchar(val ? '1' : '0');
+	putchar('\n');
+}
+
+void cmd_read_flash_regs()
+{
+	putchar('\n');
+
+	uint8_t sr1 = cmd_read_flash_reg(0x05);
+	uint8_t sr2 = cmd_read_flash_reg(0x35);
+	uint8_t sr3 = cmd_read_flash_reg(0x15);
+
+	print_reg_bit(sr1 & 0x01, "S0  (BUSY)");
+	print_reg_bit(sr1 & 0x02, "S1  (WEL)");
+	print_reg_bit(sr1 & 0x04, "S2  (BP0)");
+	print_reg_bit(sr1 & 0x08, "S3  (BP1)");
+	print_reg_bit(sr1 & 0x10, "S4  (BP2)");
+	print_reg_bit(sr1 & 0x20, "S5  (TB)");
+	print_reg_bit(sr1 & 0x40, "S6  (SEC)");
+	print_reg_bit(sr1 & 0x80, "S7  (SRP)");
+	putchar('\n');
+
+	print_reg_bit(sr2 & 0x01, "S8  (SRL)");
+	print_reg_bit(sr2 & 0x02, "S9  (QE)");
+	print_reg_bit(sr2 & 0x04, "S10 ----");
+	print_reg_bit(sr2 & 0x08, "S11 (LB1)");
+	print_reg_bit(sr2 & 0x10, "S12 (LB2)");
+	print_reg_bit(sr2 & 0x20, "S13 (LB3)");
+	print_reg_bit(sr2 & 0x40, "S14 (CMP)");
+	print_reg_bit(sr2 & 0x80, "S15 (SUS)");
+	putchar('\n');
+
+	print_reg_bit(sr3 & 0x01, "S16 ----");
+	print_reg_bit(sr3 & 0x02, "S17 ----");
+	print_reg_bit(sr3 & 0x04, "S18 (WPS)");
+	print_reg_bit(sr3 & 0x08, "S19 ----");
+	print_reg_bit(sr3 & 0x10, "S20 ----");
+	print_reg_bit(sr3 & 0x20, "S21 (DRV0)");
+	print_reg_bit(sr3 & 0x40, "S22 (DRV1)");
+	print_reg_bit(sr3 & 0x80, "S23 (HOLD)");
+	putchar('\n');
+}
+#endif
 
 static void stats_print_dec(unsigned int val, int digits, bool zero_pad)
 {
@@ -390,7 +260,13 @@ void stats(void)
 
 }
 
-// --------------------------------------------------------
+void cmd_echo()
+{
+	print("Return to menu by sending '!'\n\n");
+	char c;
+	while ((c = getchar()) != '!')
+		putchar(c);
+}
 
 void main()
 {
@@ -399,13 +275,10 @@ void main()
 	reg_uart_clkdiv = 104;
 	print("Booting..\n");
 
-	reg_leds = 0b0000000000000100;
-
 	#ifdef SPIROM
 	set_flash_qspi_flag();
 	#endif
 
-	reg_leds = 0;
 	while (getchar_prompt("Press ENTER to continue..\n") != '\r') { }
 
 	print("\n");
@@ -419,15 +292,6 @@ void main()
 	print("Total memory: ");
 	print_dec(MEM_TOTAL / 1024);
 	print(" KiB\n");
-	print("\n");
-
-	//cmd_memtest(); // test overwrites bss and data memory
-	print("\n");
-
-
-	#ifdef SPIROM
-	cmd_print_spi_state();
-	#endif
 	print("\n");
 
 	while (1)
@@ -445,13 +309,12 @@ void main()
 		print("   [5] Switch to Quad I/O mode\n");
 		print("   [6] Switch to Quad DDR mode\n");
 		print("   [7] Toggle continuous read mode\n");
-		print("   [0] Benchmark all configs\n");
-		print("   [s] Print SPI state\n");
+		print("   [S] Print SPI state\n");
 		#endif
-		print("   [9] Run simplistic benchmark\n");
-		print("   [M] Run Memtest\n");
+		print("   [b] Run benchmark\n");
+		print("   [m] Run Memtest\n");
 		print("   [e] Echo UART\n");
-		print("   [S] Stats\n");
+		print("   [s] Stats\n");
 		print("\n");
 
 		for (int rep = 10; rep > 0; rep--)
@@ -487,34 +350,25 @@ void main()
 			case '7':
 				reg_spictrl = reg_spictrl ^ 0x00100000;
 				break;
-		#endif
-			case '9':
-				cmd_benchmark(true, 0);
-				break;
-		#ifdef SPIROM
-			case '0':
-				cmd_benchmark_all();
-		#endif
-				break;
-			case 'M':
-				cmd_memtest();
-				break;
-
-		#ifdef SPIROM
-			case 's':
+			case 'S':
 				cmd_print_spi_state();
 				break;
 		#endif
+			case 'b':
+				cmd_benchmark(true, 0);
+				break;
+			case 'm':
+				cmd_memtest();
+				break;
 			case 'e':
 				cmd_echo();
 				break;
-			case 'S':
+			case 's':
 				stats();
 				break;
 			default:
 				continue;
 			}
-
 			break;
 		}
 	}

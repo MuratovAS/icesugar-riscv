@@ -5,7 +5,7 @@
 // binary, for any purpose, commercial or non-commercial, and by any
 // means.
 
-#include "stdio.h"
+#include "uart.h"
 
 void putchar(char c)
 {
