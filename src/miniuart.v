@@ -29,7 +29,7 @@ module miniuart#(
 
 	// reg
 	reg		receiveFlag = 1'b0;
-	reg	load;
+	reg	load = 1'b0;
 
 	// wire
 	wire	bytercvd;
@@ -37,9 +37,9 @@ module miniuart#(
 	wire [7:0] q;
 	
 	// assign FIXME:
-	assign reg_dat_wait = load;
+	assign reg_dat_wait = 1'b0;
 	assign reg_dat_do = q;
-	assign reg_state_wait = 1'b1;
+	assign reg_state_wait = 1'b0;
 	assign reg_state_do = status;
 
 	wire [7:0] status = 

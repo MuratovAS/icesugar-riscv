@@ -208,7 +208,7 @@ module picosoc #(
 		.reg_dat_wait(miniuart_dat_wait)
 	);
 	defparam uminiuart.UART_CLK = 12000000;
-	defparam uminiuart.BAUD_RATE = 9600;
+	defparam uminiuart.BAUD_RATE = 115200;
 
 	wire gpio_ready;
 	wire [31:0] gpio_rdata;
@@ -225,8 +225,11 @@ module picosoc #(
 	);
 
 
-	assign cpu_ready = gpio_ready || rom_ready || ram_ready || spimemio_cfgreg_sel ||
-			miniuart_state_sel || (miniuart_dat_sel && !miniuart_dat_wait) || (miniuart_state_sel && !miniuart_state_wait); 
+	assign cpu_ready = gpio_ready || rom_ready 
+								  || ram_ready 
+								  || spimemio_cfgreg_sel 
+								  || (miniuart_dat_sel && !miniuart_dat_wait) 
+								  || (miniuart_state_sel && !miniuart_state_wait); 
 
 	// data mux
 	reg [5:0] mux_rdata;
