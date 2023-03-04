@@ -240,7 +240,7 @@ static void stats_print_dec(unsigned int val, int digits, bool zero_pad)
 	}
 	while (p != buffer) {
 		if (p[-1] == ' ' && p[-2] == ' ') p[-1] = '.';
-		print_chr(*(--p));
+		putchar(*(--p));
 	}
 }
 
@@ -248,15 +248,15 @@ void stats(void)
 {
 	unsigned int num_cycles, num_instr;
 	__asm__ volatile ("rdcycle %0; rdinstret %1;" : "=r"(num_cycles), "=r"(num_instr));
-	print_str("Cycle counter ........");
+	print("Cycle counter ........");
 	stats_print_dec(num_cycles, 8, false);
-	print_str("\n\rInstruction counter ..");
+	print("\n\rInstruction counter ..");
 	stats_print_dec(num_instr, 8, false);
-	print_str("\n\rCPI: ");
+	print("\n\rCPI: ");
 	stats_print_dec((num_cycles / num_instr), 0, false);
-	print_str(".");
+	print(".");
 	stats_print_dec(((100 * num_cycles) / num_instr) % 100, 2, true);
-	print_str("\n\r");
+	print("\n\r");
 
 }
 
@@ -285,7 +285,8 @@ void main()
 	set_flash_qspi_flag();
 	#endif
 
-	//while (getchar_prompt("Press ENTER to continue..\n\r") != '\r') { }
+	char tmp;
+	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\r') { }
 
 	print("\n\r");
 	print("  ____  _          ____         ____\n\r");

@@ -62,58 +62,6 @@ void print_dec(uint32_t v)
 	else putchar('0');
 }
 
-char getchar_prompt(char *prompt)
-{
-	int32_t c = -1;
-
-	uint32_t cycles_begin, cycles_now, cycles;
-	__asm__ volatile ("rdcycle %0" : "=r"(cycles_begin));
-
-
-	if (prompt)
-		print(prompt);
-
-	while (c == -1) {
-		__asm__ volatile ("rdcycle %0" : "=r"(cycles_now));
-		cycles = cycles_now - cycles_begin;
-		if (cycles > 12000000) {
-			if (prompt)
-				print(prompt);
-			cycles_begin = cycles_now;
-		}
-		c = reg_uart_data;
-	}
-
-	return c;
-}
-
-void print_str(const char *p)
-{
-	print(p);
-}
-void print_chr(const char p)
-{
-	putchar(p);
-}
-
-// char getchar()
-// {
-// 	return getchar_prompt(0);
-// }
-
-// void putchar(char c)
-// {
-// 	reg_uart_data = c;
-// }
-
-// registers
-#define UART_DATA (*(volatile uint32_t*)0x02000008)
-#define UART_STAT (*(volatile uint32_t*)0x02000004)
-
-// bits
-#define UART_STAT_TXE 0b00000001
-#define UART_STAT_RXF 0b00000010
-
 void putchar(char c)
 {
     while ((UART_STAT & UART_STAT_TXE))

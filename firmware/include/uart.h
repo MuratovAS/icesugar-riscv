@@ -4,8 +4,13 @@
 
 #include <stdint.h>
 
-#define reg_uart_data (*(volatile uint32_t*)0x02000008)
-#define reg_uart_clkdiv (*(volatile uint32_t*)0x02000004)
+// registers
+#define UART_DATA (*(volatile uint32_t*)0x02000008)
+#define UART_STAT (*(volatile uint32_t*)0x02000004)
+
+// bits
+#define UART_STAT_TXE 0b00000001
+#define UART_STAT_RXF 0b00000010
 
 void putchar(char c);
 void print(const char *p);
