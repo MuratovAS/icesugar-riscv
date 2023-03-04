@@ -1,3 +1,8 @@
+/*
+ * gpio.v - Minimal gpio implementation for picorv32. 
+ * Copyright (c) 2023 Aleksej Muratov (MuratovAS)
+ */
+
 module gpio 
 (
     input  clk,

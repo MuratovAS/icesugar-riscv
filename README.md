@@ -11,7 +11,7 @@ This project is based on the developments of [picorv32](https://github.com/Yosys
 What is done:
 - RAM: SPRAM or BRAM
 - ROM: BRAM or SPI FLASH
-- todo: UART: Minimal size uart
+- UART: Minimal size uart
 - todo: SPI: Classic spi
 
 ## Usage

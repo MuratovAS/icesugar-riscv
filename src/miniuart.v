@@ -1,5 +1,7 @@
-// miniuart.v - strippped-down version of MC6850 ACIA wrapped around FOSS UART
-// 03-02-19 E. Brombaugh
+/*
+ * miniuart.v - Minimal uart implementation for picorv32. 
+ * Copyright (c) 2023 Aleksej Muratov (MuratovAS)
+ */
 
 `include "src/ext/uart.v"
 

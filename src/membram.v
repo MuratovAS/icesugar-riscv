@@ -1,5 +1,7 @@
-// Implementation note:
-// Replace the following modules with wrappers for your SRAM cells.
+/*
+ * membram.v - Wrappers for BRAM cells. 
+ * Copyright (c) 2023 Aleksej Muratov (MuratovAS)
+ */
 
 `ifndef FW_IMG_PATH
 `define FW_IMG_PATH ""

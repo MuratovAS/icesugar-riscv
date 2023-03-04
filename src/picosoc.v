@@ -1,3 +1,8 @@
+/*
+ * picosoc.v - Wrappers for picorv32. 
+ * Copyright (c) 2023 Aleksej Muratov (MuratovAS)
+ */
+
 `include "src/ext/picorv32.v"
 
 `include "src/membram.v"
@@ -14,11 +19,11 @@
 module picosoc #(
 	//value is set
 	parameter ROM_TYPE = 1, // 0: BRAM ; 1: SPI
-	parameter integer ROM_WORDS = 8192, //KByte
+	parameter integer ROM_WORDS = 8192, // byte (BRAM only)
 	parameter [31:0] ROM_ADDR = 32'h0010_0000, // 1 MB into flash
 
 	parameter RAM_TYPE = 1, // 0: BRAM ; 1: SPRAM
-	parameter integer RAM_WORDS = 131072, //KByte
+	parameter integer RAM_WORDS = 131072, // byte
 
 	parameter [31:0] IRQ_ADDR = 32'h0000_0000,
 	parameter [31:0] STACK_ADDR = (4*RAM_WORDS)       // end of memory
