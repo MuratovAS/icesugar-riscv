@@ -84,10 +84,10 @@ module top (
 	end
 
 	// gpio
-	wire [7:0] leds;
-	assign LED_R = leds[1];
-	assign LED_G = leds[2];
-	assign LED_B = leds[3];
+	wire [31:0] leds;
+	assign LED_R = !leds[0];
+	assign LED_G = !leds[1];
+	assign LED_B = !leds[2];
 
 	// spi flash
 	wire flash_io0_oe, flash_io0_do, flash_io0_di;
@@ -134,6 +134,6 @@ module top (
 		.irq_6        (1'b0        ),
 		.irq_7        (1'b0        ),
 
-		.gpio  ({LED_B,LED_G,LED_R})
+		.gpio  (leds)
 	);
 endmodule

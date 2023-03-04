@@ -73,10 +73,10 @@ module testbench;
 		.flash_io2(flash_io2),
 		.flash_io3(flash_io3)
 	);
-	defparam uut.soc.ROM_TYPE = 0; // 0: BRAM ; 1: SPI
+	defparam uut.soc.ROM_TYPE = 1; // 0: BRAM ; 1: SPI
 	defparam uut.soc.RAM_TYPE = 1; // 0: BRAM ; 1: SPRAM
-	defparam uut.soc.ROM_WORDS = 8192; // KB
-	defparam uut.soc.RAM_WORDS = 255; // KB
+	defparam uut.soc.ROM_WORDS = 1024; // KB
+	defparam uut.soc.RAM_WORDS = 128; // KB
 
 	spiflash spiflash (
 		.csb(flash_csb),

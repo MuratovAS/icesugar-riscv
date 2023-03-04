@@ -270,16 +270,11 @@ void cmd_echo()
 
 void main()
 {
-	/*char c;
-	while ((c = getchar()) != '!')
-	{
-		putchar(c);
-		putchar(c);
-	}*/
-
-	reg_leds = 0b0000000000000101;
+	reg_leds = 0b0000000000000001;
 
 	print("Booting..\n\r");
+
+	reg_leds = 0b0000000000000010;
 
 	#ifdef SPIROM
 	set_flash_qspi_flag();
@@ -287,6 +282,8 @@ void main()
 
 	char tmp;
 	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\r') { }
+	
+	reg_leds = 0b0000000000000100;
 
 	print("\n\r");
 	print("  ____  _          ____         ____\n\r");
