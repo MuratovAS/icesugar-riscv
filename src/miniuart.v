@@ -73,7 +73,7 @@ module miniuart#(
 
 	//clock cycle
 	wire bitxce;
-	reg [log2(UART_DIV)-1:0] bitxcecnt;
+	reg [log2(UART_DIV)-1:0] bitxcecnt = 0;
 	always @(posedge clk)
 		bitxcecnt <= (bitxcecnt == UART_DIV-1 ? 0 : bitxcecnt+1);
 	assign bitxce = (bitxcecnt == 0 ? 1 : 0); // + LUTs
@@ -89,7 +89,7 @@ module miniuart#(
 		// tx
 		.txbusy			(transmitFlag), // Status of transmit. When high do not load
 		.load			(load), // Load transmit buffer
-		.d				(reg_dat_di),
+		.d				(reg_dat_di[7:0]),
 		// rx
 		.bytercvd		(bytercvd), // Status receive. True 1 clock cycle only
 		.q				(q),
