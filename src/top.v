@@ -75,6 +75,7 @@ module top (
       .REFERENCECLK(clk_12m)
    );*/
 
+	// sys
 	reg [5:0] reset_cnt = 0;
 	wire resetn = &reset_cnt;
 
@@ -82,12 +83,13 @@ module top (
 		reset_cnt <= reset_cnt + !resetn;
 	end
 
+	// gpio
 	wire [7:0] leds;
-
 	assign LED_R = leds[1];
 	assign LED_G = leds[2];
 	assign LED_B = leds[3];
 
+	// spi flash
 	wire flash_io0_oe, flash_io0_do, flash_io0_di;
 	wire flash_io1_oe, flash_io1_do, flash_io1_di;
 	wire flash_io2_oe, flash_io2_do, flash_io2_di;
@@ -103,12 +105,23 @@ module top (
 		.D_IN_0({flash_io3_di, flash_io2_di, flash_io1_di, flash_io0_di})
 	);
 
+	// uart
+	wire	txpin, rxpin;
+	wire	rxpinmeta1,c_rxpinmeta1;
+	SB_IO #( .PIN_TYPE(6'b000000)) // NO_OUTPUT/INPUT_REGISTERED
+	IO_rx     ( .PACKAGE_PIN(uart_rx), .INPUT_CLK(clk_12m),  .D_IN_0(rxpinmeta1) );
+	SB_LUT4 #( .LUT_INIT(16'haaaa))
+		cmb( .O(c_rxpinmeta1), .I3(1'b0), .I2(1'b0), .I1(1'b0), .I0(rxpinmeta1));
+	SB_DFF metareg( .Q(rxpin), .C(clk_12m), .D(c_rxpinmeta1));
+	SB_IO #( .PIN_TYPE(6'b011111)) // OUTPUT_REGISTERED_INVERTED/INPUT_LATCH
+		IO_tx( .PACKAGE_PIN(uart_tx), .OUTPUT_CLK(clk_12m), .D_OUT_0(txpin) );
+
 	picosoc soc (
 		.clk          (clk_12m         ),
 		.resetn       (resetn      ),
 
-		.ser_tx       (uart_tx      ),
-		.ser_rx       (uart_rx      ),
+		.ser_tx       (txpin      ),
+		.ser_rx       (rxpin      ),
 
 		.flash_csb    (flash_csb   ),
 		.flash_clk    (flash_clk   ),

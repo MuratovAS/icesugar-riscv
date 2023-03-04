@@ -78,13 +78,10 @@ module miniuart#(
 		bitxcecnt <= (bitxcecnt == UART_DIV-1 ? 0 : bitxcecnt+1);
 	assign bitxce = (bitxcecnt == 0 ? 1 : 0); // + LUTs
 
-	//FIXME:
-	wire tmp;
-	assign ser_tx = !tmp;
 	// uart unit
 	uart uuart(
 		.clk			(clk),
-		.txpin			(tmp),
+		.txpin			(ser_tx),
 		.rxpin			(ser_rx),
 		// tx
 		.txbusy			(transmitFlag), // Status of transmit. When high do not load
