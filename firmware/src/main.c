@@ -281,7 +281,12 @@ void main()
 	#endif
 
 	char tmp;
-	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\r') { }
+	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\n') 
+	/*{
+		putchar(tmp); putchar(' '); 
+		print_dec(UART_STAT_RING_HEAD); putchar(' '); 
+		print_dec(UART_STAT_RING_TAIL); putchar(' '); 
+	}*/
 	
 	reg_leds = 0b0000000000000100;
 

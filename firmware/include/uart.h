@@ -8,9 +8,13 @@
 #define UART_DATA (*(volatile uint32_t*)0x02000008)
 #define UART_STAT (*(volatile uint32_t*)0x02000004)
 
+// registers masks
+#define UART_STAT_RING_HEAD (uint8_t)(UART_STAT>>8)
+#define UART_STAT_RING_TAIL (uint8_t)(UART_STAT>>16)
+
 // bits
-#define UART_STAT_TXE 0b00000001
-#define UART_STAT_RXF 0b00000010
+#define UART_STAT_TX 0b00000001
+#define UART_STAT_RX 0b00000010
 
 void putchar(char c);
 void print(const char *p);
