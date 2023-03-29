@@ -64,7 +64,8 @@ void print_dec(uint32_t v)
 
 void putchar(char c)
 {
-    while ((UART_STAT & UART_STAT_TX))
+	//while ((UART_STAT & UART_STAT_TX))
+    while (UART_STAT_F.overflow_TX)
     {
         #if defined(WDT)
             WDTRST;
@@ -75,7 +76,8 @@ void putchar(char c)
 
 char getchar()
 {
-    while (!(UART_STAT & UART_STAT_RX))
+	//while (!(UART_STAT & UART_STAT_RX))
+    while (!(UART_STAT_F.pointerEqualN_RX))
     {
         #if defined(WDT)
             WDTRST;

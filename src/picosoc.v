@@ -214,7 +214,7 @@ module picosoc #(
 		.reg_dat_wait(uart_dat_wait)
 	);
 	defparam uuart.UART_CLK = 12000000;
-	defparam uuart.BAUD_RATE = 9600;
+	defparam uuart.BAUD_RATE = 115200;
 	defparam uuart.RING_SIZE_RX = 4;
 	defparam uuart.RING_SIZE_TX = 4;
 

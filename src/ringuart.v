@@ -36,27 +36,24 @@ module ringuart#(
 	wire [7:0]	transmitData;
 	wire		receiveFlag;
 	wire [7:0]	receiveData;
-		
-	wire [7:0] status = 
-	{
-		1'b0,				// bit 7 
-		1'b0,				// bit 6 
-		1'b0,				// bit 5 
-		1'b0,				// bit 4 
-		1'b0,				// bit 3 
-		1'b0,				// bit 2 
-		pointerEqualN_RX,	// bit 1 
-		transmitFlag		// bit 0 
-	};
 
 	// ring
 	reg	[7:0] ring_RX [2**RING_SIZE_RX-1:0];
 	reg	[RING_SIZE_RX-1:0] pointerHead_RX = 0;
 	reg	[RING_SIZE_RX-1:0] pointerTail_RX = 0;
 	reg	pointerEqualN_RX;
+	reg	overflow_RX = 1'b0;
+	
+	reg	[7:0] ring_TX [2**RING_SIZE_TX-1:0];
+	reg	[RING_SIZE_TX-1:0] pointerHead_TX = 0;
+	reg	[RING_SIZE_TX-1:0] pointerTail_TX = 0;
+	reg	pointerEqualN_TX;
+	reg	overflow_TX= 1'b0;
 
+	// pointer inc
 	always @(posedge clk)
 	begin
+		// rx
 		if(reg_dat_re)
 			pointerHead_RX <= pointerHead_RX + 1'd1;
 
@@ -66,13 +63,30 @@ module ringuart#(
 			pointerTail_RX <= pointerTail_RX + 1'd1;
 		end
 
+		// tx
+		if(reg_dat_we && !reg_dat_re)
+		begin
+			ring_TX[pointerTail_TX] <= reg_dat_di[7:0];
+			pointerTail_TX <= pointerTail_TX + 1'd1;
+		end
+		
+		// rst
 		if(!resetn)
 		begin
 			pointerHead_RX <= 0;
 			pointerTail_RX <= 0;
+			pointerTail_TX <= 0;
 		end
 	end
 	
+	always @(negedge transmitFlag)
+	begin
+		if(!transmitFlag)
+			pointerHead_TX <= pointerHead_TX + 1'd1;
+		if(!resetn)
+			pointerHead_TX <= 0;
+	end
+
 	// status pointerEqual
 	always @(posedge clk)
 	begin
@@ -80,23 +94,46 @@ module ringuart#(
 			pointerEqualN_RX <= 1'b0;
 		else
 			pointerEqualN_RX <= 1'b1;
+
+		if(pointerHead_TX == pointerTail_TX)
+			pointerEqualN_TX <= 1'b0;
+		else
+			pointerEqualN_TX <= 1'b1;
 	end
 
 	// auto transmit
-	assign transmitData = reg_dat_di[7:0];
+	assign transmitData =  ring_TX[pointerHead_TX];
+	reg df = 1'b0; // for Delta-function
 	always @(posedge clk)
-		if(reg_dat_we && !reg_dat_re)
+	begin
+		if(pointerEqualN_TX == 1'b1 && df == 1'b0)
+		begin
+			df <= 1'b1;
 			transmitLoad <= 1'b1;
+		end
 		else
 			transmitLoad <= 1'b0;
 
+		if(!transmitFlag)
+			df <= 1'b0;
+	end
+	
 	// bus 
 	// FIXME: *_wait
 	assign reg_dat_wait = 1'b0; 
 	assign reg_state_wait = 1'b0;
 
 	assign reg_dat_do = ring_RX[pointerHead_RX];
-	assign reg_state_do = {pointerTail_RX[7:0], pointerHead_RX[7:0], status};
+	assign reg_state_do = { 
+							overflow_TX,
+							overflow_RX,
+							pointerEqualN_TX,
+							pointerEqualN_RX,
+							pointerHead_TX[6:0],
+							pointerTail_TX[6:0],
+							pointerHead_RX[6:0],
+							pointerTail_RX[6:0]
+							}; // status /\
 
 	// clock cycle
 	wire bitxce;

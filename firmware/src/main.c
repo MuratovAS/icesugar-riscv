@@ -280,6 +280,19 @@ void main()
 	set_flash_qspi_flag();
 	#endif
 
+	while(1)
+	{
+		print_dec(UART_STAT_F.pointerTail_RX);putchar('/');
+		print_dec(UART_STAT_F.pointerHead_RX);putchar('/');
+		print_dec(UART_STAT_F.pointerTail_TX);putchar('/');
+		print_dec(UART_STAT_F.pointerHead_TX);putchar('/');
+		print_dec(UART_STAT_F.pointerEqualN_RX);putchar('/');
+		print_dec(UART_STAT_F.pointerEqualN_TX);putchar('/');
+		print_dec(UART_STAT_F.overflow_RX);putchar('/');
+		print_dec(UART_STAT_F.overflow_TX);putchar('/');
+		putchar(getchar());putchar('\n');
+	}
+
 	char tmp;
 	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\n') 
 	/*{
