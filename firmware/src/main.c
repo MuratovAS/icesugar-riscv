@@ -280,7 +280,7 @@ void main()
 	set_flash_qspi_flag();
 	#endif
 
-	while(1)
+	/*while(1)
 	{
 		print_dec(UART_STAT_F.pointerTail_RX);putchar('/');
 		print_dec(UART_STAT_F.pointerHead_RX);putchar('/');
@@ -291,15 +291,10 @@ void main()
 		print_dec(UART_STAT_F.overflow_RX);putchar('/');
 		print_dec(UART_STAT_F.overflow_TX);putchar('/');
 		putchar(getchar());putchar('\n');
-	}
+	}*/
 
 	char tmp;
-	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\n') 
-	/*{
-		putchar(tmp); putchar(' '); 
-		print_dec(UART_STAT_RING_HEAD); putchar(' '); 
-		print_dec(UART_STAT_RING_TAIL); putchar(' '); 
-	}*/
+	while (print("Press ENTER to continue..\n\r"), tmp = getchar(), tmp != '\n') {}
 	
 	reg_leds = 0b0000000000000100;
 
