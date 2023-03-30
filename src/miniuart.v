@@ -26,12 +26,15 @@ module miniuart#(
 	input  [31:0] reg_dat_di,
 	output [31:0] reg_dat_do,
 	output        reg_dat_wait
-);
+);	
+	`define TRUE 1'b1
+	`define FALSE 1'b0
+	
 	localparam UART_DIV = UART_CLK / (BAUD_RATE*8);
 
 	// reg
-	reg		receiveFlag = 1'b0;
-	reg	load = 1'b0;
+	reg	receiveFlag = `FALSE;
+	reg	load = `FALSE;
 
 	// wire
 	wire	bytercvd;
@@ -39,19 +42,19 @@ module miniuart#(
 	wire [7:0] q;
 	
 	// assign FIXME:
-	assign reg_dat_wait = 1'b0;
+	assign reg_dat_wait = `FALSE;
 	assign reg_dat_do = q;
-	assign reg_state_wait = 1'b0;
+	assign reg_state_wait = `FALSE;
 	assign reg_state_do = status;
 
 	wire [7:0] status = 
 	{
-		1'b0,			// bit 7 
-		1'b0,			// bit 6 
-		1'b0,			// bit 5 
-		1'b0,			// bit 4 
-		1'b0,			// bit 3 
-		1'b0,			// bit 2 
+		`FALSE,			// bit 7 
+		`FALSE,			// bit 6 
+		`FALSE,			// bit 5 
+		`FALSE,			// bit 4 
+		`FALSE,			// bit 3 
+		`FALSE,			// bit 2 
 		receiveFlag,	// bit 1 
 		transmitFlag	// bit 0 
 	};
@@ -60,18 +63,18 @@ module miniuart#(
 	always @(posedge clk)
 	begin
 		if(reg_dat_re || !resetn)
-			receiveFlag <= 1'b0;
+			receiveFlag <= `FALSE;
 		if(bytercvd)
-			receiveFlag <= 1'b1;
+			receiveFlag <= `TRUE;
 
 	end
 
 	// auto transmit
 	always @(posedge clk)
 		if(reg_dat_we && !reg_dat_re)
-			load <= 1'b1;
+			load <= `TRUE;
 		else
-			load <= 1'b0;
+			load <= `FALSE;
 
 	//clock cycle
 	wire bitxce;

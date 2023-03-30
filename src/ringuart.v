@@ -29,10 +29,13 @@ module ringuart#(
 	output [31:0] reg_dat_do,
 	output        reg_dat_wait
 );
+	`define TRUE 1'b1
+	`define FALSE 1'b0
+
 	localparam UART_DIV = UART_CLK / (BAUD_RATE*8);
 
 	wire		transmitFlag;
-	reg			transmitLoad = 1'b0;
+	reg			transmitLoad = `FALSE;
 	wire [7:0]	transmitData;
 	wire		receiveFlag;
 	wire [7:0]	receiveData;
@@ -42,13 +45,13 @@ module ringuart#(
 	reg	[RING_SIZE_RX-1:0] pointerHead_RX = 0;
 	reg	[RING_SIZE_RX-1:0] pointerTail_RX = 0;
 	reg	pointerEqualN_RX;
-	reg	overflow_RX = 1'b0;
+	reg	overflow_RX = `FALSE;
 	
 	reg	[7:0] ring_TX [2**RING_SIZE_TX-1:0];
 	reg	[RING_SIZE_TX-1:0] pointerHead_TX = 0;
 	reg	[RING_SIZE_TX-1:0] pointerTail_TX = 0;
 	reg	pointerEqualN_TX;
-	reg	overflow_TX= 1'b0;
+	reg	overflow_TX= `FALSE;
 
 	// pointer inc
 	always @(posedge clk)
@@ -56,38 +59,38 @@ module ringuart#(
 		// rx
 		if(reg_dat_re)
 		begin
-			pointerHead_RX <= pointerHead_RX + 1'd1;
-			overflow_RX <= 1'b0; // reset overflow_RX
+			pointerHead_RX <= pointerHead_RX + 1;
+			overflow_RX <= `FALSE; // reset overflow_RX
 		end
 
 		if(receiveFlag)
 		begin
 			ring_RX[pointerTail_RX] <= receiveData;
-			pointerTail_RX <= pointerTail_RX + 1'd1;
+			pointerTail_RX <= pointerTail_RX + 1;
 
 			// detect overflow_RX
-			if(pointerTail_RX + 1'd1 == pointerHead_RX)
-				overflow_RX <= 1'b1;
+			if(pointerTail_RX + 1 == pointerHead_RX)
+				overflow_RX <= `TRUE;
 		end
 
 		// tx
 		if(reg_dat_we && !reg_dat_re)
 		begin
 			ring_TX[pointerTail_TX] <= reg_dat_di[7:0];
-			pointerTail_TX <= pointerTail_TX + 1'd1;
+			pointerTail_TX <= pointerTail_TX + 1;
 
 			// detect+reset overflow_TX
-			if(pointerTail_TX + 1'd1 == pointerHead_TX) // TODO: test overflow_TX
-				overflow_TX <= 1'b1;
+			if(pointerTail_TX + 1 == pointerHead_TX) // TODO: test overflow_TX
+				overflow_TX <= `TRUE;
 			else
-				overflow_TX <= 1'b0;
+				overflow_TX <= `FALSE;
 		end
 		
 		// rst
 		if(!resetn)
 		begin
-			overflow_RX <= 1'b0;
-			overflow_TX <= 1'b0;
+			overflow_RX <= `FALSE;
+			overflow_TX <= `FALSE;
 			pointerHead_RX <= 0;
 			pointerTail_RX <= 0;
 			pointerTail_TX <= 0;
@@ -97,7 +100,7 @@ module ringuart#(
 	always @(negedge transmitFlag)
 	begin
 		if(!transmitFlag)
-			pointerHead_TX <= pointerHead_TX + 1'd1;
+			pointerHead_TX <= pointerHead_TX + 1;
 		if(!resetn)
 			pointerHead_TX <= 0;
 	end
@@ -106,37 +109,37 @@ module ringuart#(
 	always @(posedge clk)
 	begin
 		if(pointerHead_RX == pointerTail_RX)
-			pointerEqualN_RX <= 1'b0;
+			pointerEqualN_RX <= `FALSE;
 		else
-			pointerEqualN_RX <= 1'b1;
+			pointerEqualN_RX <= `TRUE;
 
 		if(pointerHead_TX == pointerTail_TX)
-			pointerEqualN_TX <= 1'b0;
+			pointerEqualN_TX <= `FALSE;
 		else
-			pointerEqualN_TX <= 1'b1;
+			pointerEqualN_TX <= `TRUE;
 	end
 
 	// auto transmit
 	assign transmitData =  ring_TX[pointerHead_TX];
-	reg df = 1'b0; // for Delta-function
+	reg df = `FALSE; // for Delta-function
 	always @(posedge clk)
 	begin
-		if(pointerEqualN_TX == 1'b1 && df == 1'b0)
+		if(pointerEqualN_TX == `TRUE && df == `FALSE)
 		begin
-			df <= 1'b1;
-			transmitLoad <= 1'b1;
+			df <= `TRUE;
+			transmitLoad <= `TRUE;
 		end
 		else
-			transmitLoad <= 1'b0;
+			transmitLoad <= `FALSE;
 
 		if(!transmitFlag)
-			df <= 1'b0;
+			df <= `FALSE;
 	end
 	
 	// bus 
 	// FIXME: *_wait
-	assign reg_dat_wait = 1'b0; 
-	assign reg_state_wait = 1'b0;
+	assign reg_dat_wait = `FALSE; 
+	assign reg_state_wait = `FALSE;
 
 	assign reg_dat_do = ring_RX[pointerHead_RX];
 	assign reg_state_do = { 
@@ -148,7 +151,7 @@ module ringuart#(
 							pointerTail_TX[6:0],
 							pointerHead_RX[6:0],
 							pointerTail_RX[6:0]
-							}; // status /\
+							}; // status
 
 	// clock cycle
 	wire bitxce;

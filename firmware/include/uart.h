@@ -4,9 +4,13 @@
 
 #include <stdint.h>
 
+#define RINGUART
+
+// type
+#ifdef RINGUART
 union uart_stat {
 	uint32_t value;
-	struct { // \/
+	struct {
 		uint32_t pointerTail_RX		:7;
 		uint32_t pointerHead_RX		:7;
 		uint32_t pointerTail_TX		:7;
@@ -17,17 +21,19 @@ union uart_stat {
 		uint32_t overflow_TX		:1;
 	};
 };
+#endif
 
 // registers
 #define UART_DATA (*(volatile uint32_t*)0x02000008)
 #define UART_STAT (*(volatile uint32_t*)0x02000004)
 
-// union
-#define UART_STAT_F ((union uart_stat)UART_STAT)
-
 // bits
-//#define UART_STAT_TX 0b00000001
-//#define UART_STAT_RX 0b00000010
+#ifdef RINGUART
+#define UART_STAT_F ((union uart_stat)UART_STAT)
+#else
+#define UART_STAT_TX 0b00000001
+#define UART_STAT_RX 0b00000010
+#endif
 
 // func
 void putchar(char c);

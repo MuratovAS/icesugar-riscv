@@ -194,6 +194,7 @@ module picosoc #(
 	wire        uart_dat_sel = cpu_valid && (cpu_addr == 32'h0200_0008);
 	wire [31:0] uart_dat_do;
 	wire        uart_dat_wait;
+	//miniuart uuart (
 	ringuart uuart (
 		.clk         (clk         ),
 		.resetn      (resetn      ),
