@@ -55,12 +55,18 @@ module ringuart#(
 	begin
 		// rx
 		if(reg_dat_re)
+		begin
 			pointerHead_RX <= pointerHead_RX + 1'd1;
+			overflow_RX <= 1'b0;
+		end
 
 		if(receiveFlag)
 		begin
 			ring_RX[pointerTail_RX] <= receiveData;
 			pointerTail_RX <= pointerTail_RX + 1'd1;
+
+			if(pointerTail_RX + 1'd1 == pointerHead_RX)
+				overflow_RX <= 1'b1;
 		end
 
 		// tx
@@ -68,11 +74,18 @@ module ringuart#(
 		begin
 			ring_TX[pointerTail_TX] <= reg_dat_di[7:0];
 			pointerTail_TX <= pointerTail_TX + 1'd1;
+
+			if(pointerTail_TX + 1'd1 == pointerHead_TX) // TODO: test overflow_TX
+				overflow_TX <= 1'b1;
+			else
+				overflow_TX <= 1'b0;
 		end
 		
 		// rst
 		if(!resetn)
 		begin
+			overflow_RX <= 1'b0;
+			overflow_TX <= 1'b0;
 			pointerHead_RX <= 0;
 			pointerTail_RX <= 0;
 			pointerTail_TX <= 0;
