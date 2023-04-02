@@ -75,7 +75,7 @@ module picosoc #(
 		.ENABLE_PCPI		(0), //1
 		.ENABLE_MUL			(0), //1
 		.ENABLE_FAST_MUL	(0), //0
-		.ENABLE_DIV			(0), //1
+		.ENABLE_DIV			(1), //1
 		//.PROGADDR_IRQ		(IRQ_ADDR),
 		//.MASKED_IRQ       (MASKED_IRQ          ),
 		//.LATCHED_IRQ      (LATCHED_IRQ         ),

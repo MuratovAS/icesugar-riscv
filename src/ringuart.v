@@ -51,7 +51,7 @@ module ringuart#(
 	reg	[RING_SIZE_TX-1:0] pointerHead_TX = 0;
 	reg	[RING_SIZE_TX-1:0] pointerTail_TX = 0;
 	reg	pointerEqualN_TX;
-	reg	overflow_TX= `FALSE;
+	reg	overflow_TX = `FALSE;
 
 	// pointer inc
 	always @(posedge clk)
@@ -96,14 +96,6 @@ module ringuart#(
 			pointerTail_TX <= 0;
 		end
 	end
-	
-	always @(negedge transmitFlag)
-	begin
-		if(!transmitFlag)
-			pointerHead_TX <= pointerHead_TX + 1;
-		if(!resetn)
-			pointerHead_TX <= 0;
-	end
 
 	// status pointerEqual
 	always @(posedge clk)
@@ -117,23 +109,6 @@ module ringuart#(
 			pointerEqualN_TX <= `FALSE;
 		else
 			pointerEqualN_TX <= `TRUE;
-	end
-
-	// auto transmit
-	assign transmitData =  ring_TX[pointerHead_TX];
-	reg df = `FALSE; // for Delta-function
-	always @(posedge clk)
-	begin
-		if(pointerEqualN_TX == `TRUE && df == `FALSE)
-		begin
-			df <= `TRUE;
-			transmitLoad <= `TRUE;
-		end
-		else
-			transmitLoad <= `FALSE;
-
-		if(!transmitFlag)
-			df <= `FALSE;
 	end
 	
 	// bus 
@@ -159,6 +134,41 @@ module ringuart#(
 	always @(posedge clk)
 		bitxcecnt <= (bitxcecnt == UART_DIV-1 ? 0 : bitxcecnt+1);
 	assign bitxce = (bitxcecnt == 0 ? 1 : 0); // + LUTs
+
+	// auto transmit
+	assign transmitData =  ring_TX[pointerHead_TX];
+	reg [1:0] sm; // state machine
+	always @(posedge bitxce)
+	begin
+		case (sm)
+			0: // increment head
+				if(!transmitFlag)
+				begin
+					pointerHead_TX <= pointerHead_TX + 1;
+					sm <= 2'd1;
+				end
+			1: // sending begin
+				if(pointerEqualN_TX == `TRUE)
+				begin
+					transmitLoad <= `TRUE;
+					sm <= 2'd2;
+				end 
+			2: // delay
+				sm <= 2'd3;
+			3: // sending end
+				begin
+					transmitLoad <= `FALSE;
+					sm <= 2'd0;
+				end 
+		endcase
+
+		if(!resetn)
+		begin
+			pointerHead_TX <= 0;
+			transmitLoad <= `FALSE;
+			sm <= 2'd1;
+		end
+	end
 
 	// uart unit
 	uart uuart(
